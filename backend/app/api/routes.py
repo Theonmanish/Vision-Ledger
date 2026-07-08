@@ -110,8 +110,14 @@ async def upload(
     summary="Verify a claim",
     description=(
         "Submit a claim with an image URL for AI-based verification. "
-        "Currently returns a stub response — AI integration pending."
+        "The Fireworks AI model analyses the image and returns a "
+        "structured assessment including confidence score, detected "
+        "objects, and a recommendation."
     ),
+    responses={
+        502: {"description": "AI returned an invalid response"},
+        503: {"description": "AI service unavailable"},
+    },
 )
 async def verify(
     claim_type: str = Form(..., description="Type of the claim"),

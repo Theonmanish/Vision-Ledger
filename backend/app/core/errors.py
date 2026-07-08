@@ -66,3 +66,21 @@ def unsupported_file_type(file_type: str) -> AppException:
         f"File type '{file_type}' is not supported. "
         "Allowed types: JPEG, PNG, WebP, GIF.",
     )
+
+
+def ai_service_unavailable(message: str = "AI verification service is temporarily unavailable.") -> AppException:
+    """503 — upstream AI provider unreachable or returned an error."""
+    return AppException(
+        status.HTTP_503_SERVICE_UNAVAILABLE,
+        "AI_SERVICE_UNAVAILABLE",
+        message,
+    )
+
+
+def ai_response_invalid(message: str = "AI returned an invalid or unparseable response.") -> AppException:
+    """502 — AI provider responded but the result could not be processed."""
+    return AppException(
+        status.HTTP_502_BAD_GATEWAY,
+        "AI_RESPONSE_INVALID",
+        message,
+    )

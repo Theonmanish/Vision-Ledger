@@ -31,12 +31,28 @@ class UploadResponse(BaseModel):
 
 # ── Verify ───────────────────────────────────────────────────
 
+class AIResult(BaseModel):
+    """Structured output from the Fireworks AI model."""
+    claim_supported: bool
+    confidence: float = Field(..., ge=0.0, le=1.0)
+    objects_detected: list[str]
+    estimated_quantity: int | None = None
+    reason: str
+    limitations: str
+    recommendation: str
+
+
 class VerifyResponse(BaseModel):
-    """Returned by the /verify endpoint (AI not yet connected)."""
+    """Returned by the /verify endpoint."""
     claimId: str
     status: str
     confidence: float
     reason: str
+    claim_supported: bool
+    objects_detected: list[str]
+    estimated_quantity: int | None = None
+    limitations: str
+    recommendation: str
 
 
 # ── History ───────────────────────────────────────────────────

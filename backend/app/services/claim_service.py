@@ -3,27 +3,34 @@ Claim service — manages insurance-claim lifecycle records.
 
 Responsibilities:
   * Generate unique claim IDs.
+  * Invoke the AI verification service.
   * Persist claim metadata to Supabase.
   * Retrieve full claim history.
-
-NOTE: AI verification is **not** implemented.  The ``verify``
-      method returns a hardcoded pending response so the rest
-      of the architecture can be exercised end-to-end.
 """
 
+import logging
+
+from app.services.ai_service import AIService
 from app.services.supabase_service import SupabaseService
 from app.utils.helpers import generate_claim_id
+
+logger = logging.getLogger(__name__)
 
 
 class ClaimService:
     """
-    Orchestrates claim persistence via ``SupabaseService``.
+    Orchestrates AI verification and claim persistence.
 
-    Inject a custom ``SupabaseService`` for testing.
+    Inject custom dependencies for testing.
     """
 
-    def __init__(self, db: SupabaseService | None = None) -> None:
+    def __init__(
+        self,
+        db: SupabaseService | None = None,
+        ai: AIService | None = None,
+    ) -> None:
         self._db: SupabaseService = db or SupabaseService()
+        self._ai: AIService = ai or AIService()
 
     def verify(
         self,
@@ -32,22 +39,37 @@ class ClaimService:
         image_url: str,
     ) -> dict:
         """
-        Create a claim record and return a stub verification result.
-
-        **This is a placeholder.**  When AI integration is added,
-        replace the body of this method with a call to your model
-        while keeping the return shape identical.
+        Analyse the claim image with AI, persist the result, and
+        return a verification payload.
 
         Returns:
-            ``{"claimId": ..., "status": ..., "confidence": ..., "reason": ...}``
+            ``{
+                claimId, status, confidence, reason,
+                claim_supported, objects_detected, estimated_quantity,
+                limitations, recommendation
+            }``
         """
         claim_id = generate_claim_id()
 
-        stub_result = {
+        # ── Call AI service ─────────────────────────────────────
+        ai_result = self._ai.analyze_claim(
+            image_url=image_url,
+            claim_type=claim_type,
+            description=description,
+        )
+
+        status = "Verified" if ai_result.claim_supported else "Rejected"
+
+        result = {
             "claimId": claim_id,
-            "status": "Pending AI Verification",
-            "confidence": 0,
-            "reason": "AI integration pending",
+            "status": status,
+            "confidence": ai_result.confidence,
+            "reason": ai_result.reason,
+            "claim_supported": ai_result.claim_supported,
+            "objects_detected": ai_result.objects_detected,
+            "estimated_quantity": ai_result.estimated_quantity,
+            "limitations": ai_result.limitations,
+            "recommendation": ai_result.recommendation,
         }
 
         # Persist the claim so it appears in /history.
@@ -55,13 +77,13 @@ class ClaimService:
             "claim_id": claim_id,
             "claim_type": claim_type,
             "description": description,
-            "status": stub_result["status"],
-            "confidence": stub_result["confidence"],
-            "reason": stub_result["reason"],
+            "status": result["status"],
+            "confidence": result["confidence"],
+            "reason": result["reason"],
             "image_url": image_url,
         })
 
-        return stub_result
+        return result
 
     def get_history(self) -> list[dict]:
         """

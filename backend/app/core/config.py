@@ -23,6 +23,11 @@ class Settings(BaseSettings):
     SUPABASE_KEY: str
     SUPABASE_BUCKET: str = "evidence"
 
+    # ── Fireworks AI ──────────────────────────────────────────
+    FIREWORKS_API_KEY: str
+    FIREWORKS_BASE_URL: str = "https://api.fireworks.ai/inference/v1"
+    MODEL_NAME: str = "accounts/fireworks/models/qwen3p7-plus"
+
     # ── Application ───────────────────────────────────────────
     APP_NAME: str = "VisionLedger Backend"
     DEBUG: bool = False
