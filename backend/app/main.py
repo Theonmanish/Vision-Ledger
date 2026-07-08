@@ -29,12 +29,12 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     pools, ML model warm-up, etc.) and tear them down cleanly.
     """
     # -- Startup --
-    print(f"⚡ {settings.APP_NAME} starting …")
+    print(f"{settings.APP_NAME} starting...")
     print(f"   Supabase URL : {settings.SUPABASE_URL}")
     print(f"   Storage bucket: {settings.SUPABASE_BUCKET}")
     yield
     # -- Shutdown --
-    print(f"🛑 {settings.APP_NAME} shutting down.")
+    print(f"{settings.APP_NAME} shutting down.")
 
 
 # -- Application instance --
@@ -52,12 +52,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:3000",
-    ],
+    allow_origins=settings.cors_origin_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

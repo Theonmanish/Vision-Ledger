@@ -9,6 +9,7 @@ them together — the pattern is already compatible with that.
 from typing import Annotated
 
 from fastapi import APIRouter, File, Form, UploadFile, Depends
+from fastapi.responses import StreamingResponse
 
 from app.core.config import settings
 from app.schemas.claims import (
@@ -17,9 +18,13 @@ from app.schemas.claims import (
     UploadResponse,
     VerifyResponse,
     HistoryResponse,
+    ClaimDetailResponse,
+    CertificateRequest,
 )
 from app.services.storage_service import StorageService
 from app.services.claim_service import ClaimService
+from app.services.certificate_service import CertificateService
+from app.core.errors import not_found
 
 # -- Router --
 
@@ -38,9 +43,15 @@ def _claim_service() -> ClaimService:
     return ClaimService()
 
 
+def _certificate_service() -> CertificateService:
+    """Yield a fresh CertificateService per request."""
+    return CertificateService()
+
+
 # Type aliases for cleaner injection signatures.
 StorageDep = Annotated[StorageService, Depends(_storage_service)]
 ClaimDep = Annotated[ClaimService, Depends(_claim_service)]
+CertificateDep = Annotated[CertificateService, Depends(_certificate_service)]
 
 
 # -- GET / --
@@ -87,8 +98,8 @@ async def health() -> HealthResponse:
     },
 )
 async def upload(
+    storage: StorageDep,
     file: UploadFile = File(..., description="Evidence image file"),
-    storage: StorageDep = StorageService(),
 ) -> UploadResponse:
     """
     Validate the MIME type, upload to Supabase Storage, and
@@ -120,10 +131,10 @@ async def upload(
     },
 )
 async def verify(
+    claims: ClaimDep,
     claim_type: str = Form(..., description="Type of the claim"),
     description: str = Form(..., description="Description of the claim"),
     image_url: str = Form(..., description="Public URL of the uploaded image"),
-    claims: ClaimDep = ClaimService(),
 ) -> VerifyResponse:
     result = claims.verify(
         claim_type=claim_type,
@@ -142,7 +153,58 @@ async def verify(
     description="Return all stored claims, ordered newest-first.",
 )
 async def history(
-    claims: ClaimDep = ClaimService(),
+    claims: ClaimDep,
 ) -> HistoryResponse:
     all_claims = claims.get_history()
     return HistoryResponse(claims=all_claims, count=len(all_claims))
+
+
+# -- GET /claims/{claim_id} --
+
+@router.get(
+    "/claims/{claim_id}",
+    response_model=ClaimDetailResponse,
+    summary="Get claim by ID",
+    description="Return full details for a single verification record.",
+    responses={404: {"description": "Claim not found"}},
+)
+async def get_claim(
+    claim_id: str,
+    claims: ClaimDep,
+) -> ClaimDetailResponse:
+    claim = claims.get_claim(claim_id)
+    if not claim:
+        raise not_found("Claim")
+    return ClaimDetailResponse(**claim)
+
+
+# -- POST /certificate --
+
+@router.post(
+    "/certificate",
+    summary="Generate verification certificate",
+    description=(
+        "Generate and download a PDF certificate for the given claim. "
+        "Returns application/pdf with Content-Disposition attachment."
+    ),
+    responses={
+        404: {"description": "Claim not found"},
+    },
+)
+async def certificate(
+    body: CertificateRequest,
+    claims: ClaimDep,
+    cert_service: CertificateDep,
+) -> StreamingResponse:
+    claim = claims.get_claim(body.claim_id)
+    if not claim:
+        raise not_found("Claim")
+
+    pdf_bytes, filename = cert_service.generate(claim)
+    return StreamingResponse(
+        iter([pdf_bytes]),
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+        },
+    )

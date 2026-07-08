@@ -19,8 +19,8 @@ ALLOWED_IMAGE_TYPE_LABELS: str = "JPEG, PNG, WebP, GIF"
 # Supabase table name for claim records.
 CLAIMS_TABLE: str = "claims"
 
-# Columns returned when fetching claims (must match schema).
+# Columns returned when fetching claims (must match live Supabase schema).
 CLAIM_COLUMNS: str = (
-    "id, claim_id, claim_type, description, status, "
-    "confidence, reason, image_url, created_at"
+    "id, claim_type, description, image_url, status, confidence, reason, "
+    "image_hash, report_hash, tx_hash, created_at, claim_input"
 )

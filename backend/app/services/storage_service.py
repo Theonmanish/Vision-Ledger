@@ -7,8 +7,7 @@ Responsibilities:
   • Return a publicly-accessible URL for the uploaded object.
 """
 
-import io
-from typing import BinaryIO
+import logging
 
 from supabase import Client
 
@@ -17,6 +16,8 @@ from app.core.errors import unsupported_file_type, upload_failed
 from app.db.supabase import supabase_client
 from app.models.constants import ALLOWED_IMAGE_TYPES
 from app.utils.helpers import sanitise_filename
+
+logger = logging.getLogger(__name__)
 
 
 class StorageService:
@@ -41,7 +42,7 @@ class StorageService:
 
     def upload_image(
         self,
-        file_data: BinaryIO,
+        file_data,
         filename: str,
         content_type: str,
     ) -> dict[str, str]:
@@ -57,14 +58,17 @@ class StorageService:
         file_bytes = file_data.read()
 
         try:
-            # ``storage.from_`` returns a StorageBucket client.
             bucket = self._client.storage.from_(self._bucket)
-            bucket.upload(safe_name, io.BytesIO(file_bytes), {
-                "content-type": content_type,
-            })
+            bucket.upload(
+                safe_name,
+                file_bytes,
+                {
+                    "content-type": content_type,
+                    "upsert": "true",
+                },
+            )
 
-            # Build the public URL for the uploaded file.
-            image_url = bucket.get_public_url(safe_name)
+            image_url = bucket.get_public_url(safe_name).rstrip("?")
 
             return {
                 "imageUrl": image_url,
@@ -72,4 +76,5 @@ class StorageService:
             }
 
         except Exception as exc:
+            logger.exception("Supabase storage upload failed")
             raise upload_failed(str(exc))

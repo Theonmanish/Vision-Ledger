@@ -31,6 +31,15 @@ class Settings(BaseSettings):
     # ── Application ───────────────────────────────────────────
     APP_NAME: str = "VisionLedger Backend"
     DEBUG: bool = False
+    CORS_ORIGINS: str = (
+        "http://localhost:5173,http://localhost:3000,"
+        "http://127.0.0.1:5173,http://127.0.0.1:3000"
+    )
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        """Parse comma-separated CORS origins."""
+        return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
 
 
 # Singleton — import this wherever settings are needed.

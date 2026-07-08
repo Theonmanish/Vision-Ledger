@@ -12,7 +12,8 @@ import logging
 
 from app.services.ai_service import AIService
 from app.services.supabase_service import SupabaseService
-from app.utils.helpers import generate_claim_id
+from app.utils.helpers import generate_claim_id, placeholder_tx_hash
+from app.utils.claim_mapper import build_claim_payload, normalize_claim_record
 
 logger = logging.getLogger(__name__)
 
@@ -41,19 +42,11 @@ class ClaimService:
         """
         Analyse the claim image with AI, persist the result, and
         return a verification payload.
-
-        Returns:
-            ``{
-                claimId, status, confidence, reason,
-                claim_supported, objects_detected, estimated_quantity,
-                limitations, recommendation
-            }``
         """
-        claim_id = generate_claim_id()
+        claim_code = generate_claim_id()
 
-        # ── Call AI service ─────────────────────────────────────
         ai_result = self._ai.analyze_claim(
-            image_url=image_url,
+            image_url=image_url.rstrip("?"),
             claim_type=claim_type,
             description=description,
         )
@@ -61,7 +54,7 @@ class ClaimService:
         status = "Verified" if ai_result.claim_supported else "Rejected"
 
         result = {
-            "claimId": claim_id,
+            "claimId": claim_code,
             "status": status,
             "confidence": ai_result.confidence,
             "reason": ai_result.reason,
@@ -72,18 +65,35 @@ class ClaimService:
             "recommendation": ai_result.recommendation,
         }
 
-        # Persist the claim so it appears in /history.
-        self._db.create_claim({
-            "claim_id": claim_id,
-            "claim_type": claim_type,
-            "description": description,
-            "status": result["status"],
-            "confidence": result["confidence"],
-            "reason": result["reason"],
-            "image_url": image_url,
-        })
+        saved = self._db.create_claim(
+            build_claim_payload(
+                claim_code=claim_code,
+                claim_type=claim_type,
+                description=description,
+                image_url=image_url,
+                status=status,
+                confidence=ai_result.confidence,
+                reason=ai_result.reason,
+                tx_hash=placeholder_tx_hash(claim_code),
+                claim_supported=ai_result.claim_supported,
+                objects_detected=ai_result.objects_detected,
+                estimated_quantity=ai_result.estimated_quantity,
+                limitations=ai_result.limitations,
+                recommendation=ai_result.recommendation,
+            )
+        )
+
+        if saved:
+            normalized = normalize_claim_record(saved)
+            result["claimId"] = normalized["claim_id"]
+        else:
+            logger.warning("Claim %s verified but could not be persisted", claim_code)
 
         return result
+
+    def get_claim(self, claim_id: str) -> dict | None:
+        """Return a single claim by its public identifier."""
+        return self._db.get_claim_by_id(claim_id)
 
     def get_history(self) -> list[dict]:
         """

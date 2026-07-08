@@ -70,6 +70,7 @@ class AIService:
         self._client: OpenAI = client or OpenAI(
             api_key=settings.FIREWORKS_API_KEY,
             base_url=settings.FIREWORKS_BASE_URL,
+            timeout=60.0,
         )
         self._model: str = settings.MODEL_NAME
 

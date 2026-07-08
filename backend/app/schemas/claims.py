@@ -61,3 +61,30 @@ class HistoryResponse(BaseModel):
     """Wrapper for the list of stored claims."""
     claims: list[dict[str, Any]]
     count: int
+
+
+# ── Claim detail ──────────────────────────────────────────────
+
+class ClaimDetailResponse(BaseModel):
+    """Full claim record returned by GET /claims/{claim_id}."""
+    id: str | None = None
+    claim_id: str
+    claim_type: str
+    description: str | None = None
+    status: str
+    confidence: float
+    reason: str | None = None
+    image_url: str | None = None
+    created_at: str | None = None
+    claim_supported: bool | None = None
+    objects_detected: list[str] | None = None
+    estimated_quantity: int | None = None
+    limitations: str | None = None
+    recommendation: str | None = None
+
+
+# ── Certificate ─────────────────────────────────────────────
+
+class CertificateRequest(BaseModel):
+    """Body for POST /certificate."""
+    claim_id: str = Field(..., min_length=1, description="Public claim identifier")

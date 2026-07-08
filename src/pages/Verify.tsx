@@ -7,6 +7,7 @@ import { Textarea } from '../components/ui/textarea';
 import { Progress } from '../components/ui/progress';
 import type { ClaimType } from '../types';
 import { CLAIM_TYPE_LABELS } from '../types';
+import { uploadImage, verifyClaim, ApiError } from '../lib/api';
 import { ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 const CLAIM_TYPE_OPTIONS = Object.entries(CLAIM_TYPE_LABELS).map(([value, label]) => ({
@@ -14,7 +15,13 @@ const CLAIM_TYPE_OPTIONS = Object.entries(CLAIM_TYPE_LABELS).map(([value, label]
   label,
 }));
 
-const MOCK_UPLOAD_DURATION = 2500;
+const PROGRESS_STEPS = [
+  { at: 15, message: 'Uploading evidence...' },
+  { at: 40, message: 'Running AI analysis...' },
+  { at: 65, message: 'Analyzing detected objects...' },
+  { at: 85, message: 'Recording verification...' },
+  { at: 100, message: 'Generating certificate...' },
+];
 
 export default function Verify() {
   const navigate = useNavigate();
@@ -60,45 +67,58 @@ export default function Verify() {
     }
 
     setIsUploading(true);
-    setProgress(0);
+    setProgress(5);
+    setSuccessMessage(PROGRESS_STEPS[0].message);
 
-    // Simulate upload and analysis progress
-    const steps = [
-      { at: 20, message: 'Uploading evidence...' },
-      { at: 40, message: 'Running AI analysis...' },
-      { at: 60, message: 'Analyzing detected objects...' },
-      { at: 80, message: 'Recording to blockchain...' },
-      { at: 100, message: 'Generating certificate...' },
-    ];
-
-    let currentStep = 0;
+    let stepIndex = 0;
     const interval = setInterval(() => {
       setProgress((prev) => {
-        const next = Math.min(prev + Math.random() * 15 + 5, 100);
-        if (next >= steps[currentStep]?.at && currentStep < steps.length) {
-          setSuccessMessage(steps[currentStep].message);
-          currentStep++;
+        const next = Math.min(prev + 4, 92);
+        if (
+          stepIndex < PROGRESS_STEPS.length &&
+          next >= PROGRESS_STEPS[stepIndex].at
+        ) {
+          setSuccessMessage(PROGRESS_STEPS[stepIndex].message);
+          stepIndex++;
         }
         return next;
       });
-    }, 300);
+    }, 400);
 
-    setTimeout(() => {
+    try {
+      const upload = await uploadImage(file);
+      setProgress(35);
+      setSuccessMessage(PROGRESS_STEPS[1].message);
+
+      const result = await verifyClaim({
+        claimType,
+        description: description.trim(),
+        imageUrl: upload.imageUrl,
+      });
+
       clearInterval(interval);
       setProgress(100);
       setSuccessMessage('Verification complete!');
       setTimeout(() => {
-        const mockId = 'v-' + String(Math.floor(Math.random() * 5) + 1).padStart(3, '0');
-        navigate(`/results/${mockId}`);
-      }, 800);
-    }, MOCK_UPLOAD_DURATION);
+        navigate(`/results/${result.claimId}`);
+      }, 600);
+    } catch (err) {
+      clearInterval(interval);
+      setProgress(0);
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError('Verification failed. Please check your connection and try again.');
+      }
+    } finally {
+      setIsUploading(false);
+    }
   }, [file, claimType, description, navigate]);
 
   const isValid = file && claimType && description.trim();
 
   return (
     <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-10 sm:py-16">
-      {/* Header */}
       <div className="mb-10 text-center">
         <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Verify Evidence</h1>
         <p className="mt-3 text-muted text-lg">
@@ -106,13 +126,11 @@ export default function Verify() {
         </p>
       </div>
 
-      {/* Upload */}
       <div className="mb-8">
         <label className="block text-sm font-medium mb-3">Evidence Image</label>
         <UploadCard onFileSelect={handleFileSelect} previewUrl={previewUrl} />
       </div>
 
-      {/* Form */}
       <div className="space-y-6">
         <div>
           <label htmlFor="claim-type" className="block text-sm font-medium mb-2">
@@ -143,7 +161,6 @@ export default function Verify() {
         </div>
       </div>
 
-      {/* Progress */}
       {isUploading && (
         <div className="mt-8 space-y-4">
           <Progress value={progress} className="h-2" />
@@ -156,7 +173,6 @@ export default function Verify() {
         </div>
       )}
 
-      {/* Error */}
       {error && (
         <div className="mt-6 flex items-center gap-2 rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
           <AlertCircle className="h-4 w-4 shrink-0" />
@@ -164,7 +180,6 @@ export default function Verify() {
         </div>
       )}
 
-      {/* CTA */}
       <div className="mt-8">
         <Button
           size="lg"

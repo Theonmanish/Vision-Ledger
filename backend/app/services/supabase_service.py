@@ -6,10 +6,15 @@ higher-level services (StorageService, ClaimService) stay
 decoupled from the Supabase SDK surface area.
 """
 
+import logging
+
 from supabase import Client
 
 from app.db.supabase import supabase_client
 from app.models.constants import CLAIMS_TABLE, CLAIM_COLUMNS
+from app.utils.claim_mapper import normalize_claim_record
+
+logger = logging.getLogger(__name__)
 
 
 class SupabaseService:
@@ -21,8 +26,6 @@ class SupabaseService:
 
     def __init__(self) -> None:
         self._client: Client = supabase_client
-
-    # ── Generic helpers ──────────────────────────────────────
 
     def fetch_all(self, table: str, columns: str = "*") -> list[dict]:
         """
@@ -38,8 +41,9 @@ class SupabaseService:
                 .order("created_at", desc=True)
                 .execute()
             )
-            return resp.data
+            return [normalize_claim_record(row) for row in resp.data]
         except Exception:
+            logger.exception("Supabase fetch_all failed for table %s", table)
             return []
 
     def insert_row(self, table: str, payload: dict) -> dict | None:
@@ -51,9 +55,8 @@ class SupabaseService:
             resp = self._client.table(table).insert(payload).execute()
             return resp.data[0] if resp.data else None
         except Exception:
+            logger.exception("Supabase insert failed for table %s", table)
             return None
-
-    # ── Claim-specific convenience ───────────────────────────
 
     def get_all_claims(self) -> list[dict]:
         """Fetch claims ordered newest-first."""
@@ -62,3 +65,19 @@ class SupabaseService:
     def create_claim(self, payload: dict) -> dict | None:
         """Insert a new claim record."""
         return self.insert_row(CLAIMS_TABLE, payload)
+
+    def get_claim_by_id(self, claim_id: str) -> dict | None:
+        """Fetch a single claim by its UUID primary key."""
+        try:
+            resp = (
+                self._client.table(CLAIMS_TABLE)
+                .select(CLAIM_COLUMNS)
+                .eq("id", claim_id)
+                .limit(1)
+                .execute()
+            )
+            if resp.data:
+                return normalize_claim_record(resp.data[0])
+        except Exception:
+            logger.exception("Supabase get_claim_by_id failed for %s", claim_id)
+        return None

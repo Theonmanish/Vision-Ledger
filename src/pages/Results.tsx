@@ -1,9 +1,11 @@
+import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import StatusBadge from '../components/shared/StatusBadge';
 import ResultCard from '../components/shared/ResultCard';
+import LoadingScreen from '../components/shared/LoadingScreen';
 import {
   ArrowLeft,
   Shield,
@@ -17,10 +19,10 @@ import {
   AlertTriangle,
   HelpCircle,
 } from 'lucide-react';
-import { MOCK_RESULTS } from '../data/mock';
-import { CLAIM_TYPE_LABELS } from '../types';
+import { CLAIM_TYPE_LABELS, type VerificationResult } from '../types';
 import { formatDateTime, formatConfidence, truncateHash } from '../lib/utils';
 import { cn } from '../lib/utils';
+import { fetchClaim, downloadCertificate, ApiError } from '../lib/api';
 
 const statusIcons = {
   verified: CheckCircle2,
@@ -38,9 +40,70 @@ const statusColors = {
 
 export default function Results() {
   const { id } = useParams<{ id: string }>();
-  const result = id ? MOCK_RESULTS[id] : null;
+  const [result, setResult] = useState<VerificationResult | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
 
-  if (!result) {
+  useEffect(() => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    fetchClaim(id)
+      .then((data) => {
+        if (!cancelled) setResult(data);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(
+            err instanceof ApiError
+              ? err.message
+              : 'Failed to load verification results.'
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  const handleDownloadCertificate = async () => {
+    if (!id) return;
+    setDownloading(true);
+    setDownloadError(null);
+    try {
+      await downloadCertificate(id);
+    } catch (err) {
+      setDownloadError(
+        err instanceof ApiError
+          ? err.message
+          : 'Failed to download certificate.'
+      );
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-10">
+        <LoadingScreen message="Loading verification results..." />
+      </div>
+    );
+  }
+
+  if (error || !result) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-20 text-center">
         <div className="flex flex-col items-center gap-4">
@@ -49,7 +112,7 @@ export default function Results() {
           </div>
           <h2 className="text-2xl font-bold">Verification not found</h2>
           <p className="text-muted">
-            The verification result you're looking for doesn't exist or has been removed.
+            {error ?? "The verification result you're looking for doesn't exist or has been removed."}
           </p>
           <Button asChild>
             <Link to="/verify">Start a new verification</Link>
@@ -63,7 +126,6 @@ export default function Results() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-10 sm:py-16">
-      {/* Back + Header */}
       <div className="mb-8">
         <Link
           to="/history"
@@ -90,20 +152,23 @@ export default function Results() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column — Evidence + Objects */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Evidence Image */}
           <Card className="overflow-hidden">
             <div className="aspect-video relative">
-              <img
-                src={result.imageUrl}
-                alt="Evidence"
-                className="w-full h-full object-cover"
-              />
+              {result.imageUrl ? (
+                <img
+                  src={result.imageUrl}
+                  alt="Evidence"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center bg-accent text-muted">
+                  No image available
+                </div>
+              )}
             </div>
           </Card>
 
-          {/* Detected Objects */}
           <ResultCard icon={Brain} title="AI Analysis">
             <div className="space-y-4">
               <p className="text-sm text-muted leading-relaxed">
@@ -112,25 +177,28 @@ export default function Results() {
 
               <div>
                 <p className="text-sm font-medium mb-3">Detected Objects</p>
-                <div className="flex flex-wrap gap-2">
-                  {result.detectedObjects.map((obj) => (
-                    <Badge
-                      key={obj.label}
-                      variant="secondary"
-                      className="text-xs"
-                    >
-                      {obj.label}
-                      <span className="ml-1.5 text-muted">
-                        {(obj.confidence * 100).toFixed(0)}%
-                      </span>
-                    </Badge>
-                  ))}
-                </div>
+                {result.detectedObjects.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {result.detectedObjects.map((obj) => (
+                      <Badge
+                        key={obj.label}
+                        variant="secondary"
+                        className="text-xs"
+                      >
+                        {obj.label}
+                        <span className="ml-1.5 text-muted">
+                          {(obj.confidence * 100).toFixed(0)}%
+                        </span>
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted">No objects detected.</p>
+                )}
               </div>
             </div>
           </ResultCard>
 
-          {/* AI Explanation */}
           <ResultCard icon={Hash} title="Blockchain Record">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1">
@@ -158,19 +226,20 @@ export default function Results() {
             </div>
 
             <div className="mt-4 pt-4 border-t border-border/50">
-              <Button variant="outline" size="sm" asChild>
-                <a href="#" className="inline-flex items-center gap-1.5">
+              <Button variant="outline" size="sm" disabled>
+                <span className="inline-flex items-center gap-1.5">
                   View on Explorer
                   <ExternalLink className="h-3.5 w-3.5" />
-                </a>
+                </span>
               </Button>
+              <p className="mt-2 text-xs text-muted">
+                Blockchain integration pending — hash shown is a deterministic placeholder.
+              </p>
             </div>
           </ResultCard>
         </div>
 
-        {/* Right Column — Status + Confidence + Certificate */}
         <div className="space-y-6">
-          {/* Status Card */}
           <Card>
             <CardContent className="p-6">
               <div className="flex flex-col items-center text-center gap-4">
@@ -207,7 +276,6 @@ export default function Results() {
             </CardContent>
           </Card>
 
-          {/* Confidence Card */}
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center gap-3 mb-4">
@@ -217,7 +285,6 @@ export default function Results() {
                 <p className="font-semibold">Confidence Score</p>
               </div>
 
-              {/* Circular Progress */}
               <div className="flex justify-center py-2">
                 <div className="relative flex h-32 w-32 items-center justify-center">
                   <svg className="absolute inset-0 h-full w-full -rotate-90">
@@ -251,23 +318,26 @@ export default function Results() {
             </CardContent>
           </Card>
 
-          {/* Certificate Card */}
           <ResultCard icon={FileCheck} title="Certificate">
             <div className="space-y-3">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted">Issued</span>
                 <span>{formatDateTime(result.certificate.issuedAt)}</span>
               </div>
-              <Button className="w-full" asChild>
-                <a href={result.certificate.downloadUrl}>
-                  <Download className="mr-2 h-4 w-4" />
-                  Download Certificate
-                </a>
+              {downloadError && (
+                <p className="text-xs text-danger">{downloadError}</p>
+              )}
+              <Button
+                className="w-full"
+                onClick={handleDownloadCertificate}
+                disabled={downloading}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                {downloading ? 'Generating...' : 'Download Certificate'}
               </Button>
             </div>
           </ResultCard>
 
-          {/* Actions */}
           <Button variant="outline" className="w-full" asChild>
             <Link to="/verify">Verify another claim</Link>
           </Button>

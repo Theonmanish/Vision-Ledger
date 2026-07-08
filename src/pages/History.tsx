@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -12,28 +12,64 @@ import {
 } from '../components/ui/table';
 import StatusBadge from '../components/shared/StatusBadge';
 import EmptyState from '../components/shared/EmptyState';
-import { MOCK_HISTORY } from '../data/mock';
-import { CLAIM_TYPE_LABELS } from '../types';
+import LoadingScreen from '../components/shared/LoadingScreen';
+import { CLAIM_TYPE_LABELS, type HistoryRecord } from '../types';
 import { formatDate, truncateHash } from '../lib/utils';
-import { Search, Eye, History } from 'lucide-react';
+import { fetchHistory, ApiError } from '../lib/api';
+import { Search, Eye, History, AlertCircle } from 'lucide-react';
 
 export default function HistoryPage() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [records, setRecords] = useState<HistoryRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const records = MOCK_HISTORY;
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchHistory()
+      .then((data) => {
+        if (!cancelled) setRecords(data);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(
+            err instanceof ApiError
+              ? err.message
+              : 'Failed to load verification history.'
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const filtered = searchQuery
     ? records.filter(
         (r) =>
           r.claimId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          CLAIM_TYPE_LABELS[r.claimType].toLowerCase().includes(searchQuery.toLowerCase()) ||
+          CLAIM_TYPE_LABELS[r.claimType]
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
           r.transactionHash.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : records;
 
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
+        <LoadingScreen message="Loading verification history..." />
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 sm:py-16">
-      {/* Header */}
       <div className="mb-10">
         <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Verification History</h1>
         <p className="mt-3 text-muted text-lg">
@@ -41,7 +77,14 @@ export default function HistoryPage() {
         </p>
       </div>
 
-      {records.length === 0 ? (
+      {error && (
+        <div className="mb-6 flex items-center gap-2 rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {records.length === 0 && !error ? (
         <EmptyState
           icon={History}
           title="No verifications yet"
@@ -51,7 +94,6 @@ export default function HistoryPage() {
         />
       ) : (
         <>
-          {/* Search */}
           <div className="mb-6">
             <div className="relative max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
@@ -64,7 +106,6 @@ export default function HistoryPage() {
             </div>
           </div>
 
-          {/* Table */}
           <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
             <Table>
               <TableHeader>
@@ -109,7 +150,7 @@ export default function HistoryPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="sm" asChild>
-                        <Link to={`/results/${record.id}`}>
+                        <Link to={`/results/${record.claimId}`}>
                           <Eye className="mr-1.5 h-3.5 w-3.5" />
                           View
                         </Link>
