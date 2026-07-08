@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import FeatureCard from '../components/shared/FeatureCard';
-import { Shield, Cpu, FileCheck, BarChart3, ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
+import Hero from '../components/hero/Hero';
+import { Shield, Cpu, FileCheck, BarChart3, ArrowRight } from 'lucide-react';
 
 const FEATURES = [
   {
@@ -56,58 +57,7 @@ const HOW_IT_WORKS = [
 export default function Landing() {
   return (
     <div className="flex flex-col">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden">
-        <div className="bg-hero-glow pointer-events-none absolute inset-0" />
-        <div className="bg-dot-grid pointer-events-none absolute inset-0 opacity-40" />
-
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-20 pb-28 sm:pt-28 sm:pb-36">
-          <div className="mx-auto max-w-3xl text-center">
-            <div className="inline-flex items-center gap-2 rounded-full border border-border/50 bg-accent/50 px-4 py-1.5 text-sm text-muted mb-8">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <span>AI-Powered Verification Platform</span>
-            </div>
-
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight">
-              Proof of Reality in an{' '}
-              <span className="text-primary">AI-Generated</span> World
-            </h1>
-
-            <p className="mt-6 text-lg sm:text-xl text-muted max-w-2xl mx-auto leading-relaxed">
-              VisionLedger uses advanced AI and blockchain technology to verify real-world claims —
-              from tree plantations to solar installations. Upload evidence, get instant analysis,
-              and receive tamper-proof certificates.
-            </p>
-
-            <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button size="lg" asChild>
-                <Link to="/verify">
-                  Verify Evidence
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-              <Button variant="outline" size="lg" asChild>
-                <a href="#how-it-works">How It Works</a>
-              </Button>
-            </div>
-
-            <div className="mt-12 flex items-center justify-center gap-6 sm:gap-10 text-sm text-muted">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-success" />
-                <span>2,847 verified claims</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-success" />
-                <span>99.2% accuracy</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-success" />
-                <span>Blockchain secured</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <Hero />
 
       {/* Features Section */}
       <section className="border-t border-border/50 bg-background">
