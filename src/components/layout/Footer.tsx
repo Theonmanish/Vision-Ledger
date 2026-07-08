@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import { Shield } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -8,13 +7,12 @@ export default function Footer() {
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
           <div className="space-y-3">
-            <Link to="/" className="flex items-center gap-2.5 group">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                <Shield className="h-4 w-4 text-primary-foreground" />
-              </div>
-              <span className="text-base font-bold">
-                Vision<span className="text-primary">Ledger</span>
-              </span>
+            <Link to="/" className="inline-flex items-center group">
+              <img
+                src="/logo.svg"
+                alt="VisionLedger"
+                className="h-8 w-auto"
+              />
             </Link>
             <p className="text-sm text-muted leading-relaxed max-w-xs">
               Proof of Reality in an AI-Generated World. Verify claims with AI analysis and

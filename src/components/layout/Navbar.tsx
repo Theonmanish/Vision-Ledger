@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '../../lib/utils';
-import { Shield, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useState } from 'react';
 
@@ -18,13 +18,12 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary transition-all duration-300 group-hover:shadow-[0_0_20px] group-hover:shadow-primary/40">
-            <Shield className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <span className="text-lg font-bold tracking-tight">
-            Vision<span className="text-primary">Ledger</span>
-          </span>
+        <Link to="/" className="flex items-center group">
+          <img
+            src="/logo.svg"
+            alt="VisionLedger"
+            className="h-8 md:h-10 w-auto"
+          />
         </Link>
 
         {/* Desktop Nav */}
