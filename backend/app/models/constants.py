@@ -19,5 +19,8 @@ ALLOWED_IMAGE_TYPE_LABELS: str = "JPEG, PNG, WebP, GIF"
 # Supabase table name for claim records.
 CLAIMS_TABLE: str = "claims"
 
-# Default fields expected on a claim row.
-CLAIM_COLUMNS: str = "id, claim_id, status, confidence, reason, image_url, created_at"
+# Columns returned when fetching claims (must match schema).
+CLAIM_COLUMNS: str = (
+    "id, claim_id, claim_type, description, status, "
+    "confidence, reason, image_url, created_at"
+)

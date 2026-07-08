@@ -2,16 +2,14 @@
 Claim service — manages insurance-claim lifecycle records.
 
 Responsibilities:
-  • Generate unique claim IDs.
-  • Persist claim metadata to Supabase.
-  • Retrieve full claim history.
+  * Generate unique claim IDs.
+  * Persist claim metadata to Supabase.
+  * Retrieve full claim history.
 
 NOTE: AI verification is **not** implemented.  The ``verify``
       method returns a hardcoded pending response so the rest
       of the architecture can be exercised end-to-end.
 """
-
-from datetime import datetime, timezone
 
 from app.services.supabase_service import SupabaseService
 from app.utils.helpers import generate_claim_id
@@ -27,11 +25,14 @@ class ClaimService:
     def __init__(self, db: SupabaseService | None = None) -> None:
         self._db: SupabaseService = db or SupabaseService()
 
-    # ── Verify (stub — AI not connected) ───────────────────────
-
-    def verify(self, image_url: str | None = None) -> dict:
+    def verify(
+        self,
+        claim_type: str,
+        description: str,
+        image_url: str,
+    ) -> dict:
         """
-        Analyse a claim image and return a verification result.
+        Create a claim record and return a stub verification result.
 
         **This is a placeholder.**  When AI integration is added,
         replace the body of this method with a call to your model
@@ -46,12 +47,14 @@ class ClaimService:
             "claimId": claim_id,
             "status": "Pending AI Verification",
             "confidence": 0,
-            "reason": "AI not connected yet",
+            "reason": "AI integration pending",
         }
 
-        # Persist the stub claim so it appears in /history.
+        # Persist the claim so it appears in /history.
         self._db.create_claim({
             "claim_id": claim_id,
+            "claim_type": claim_type,
+            "description": description,
             "status": stub_result["status"],
             "confidence": stub_result["confidence"],
             "reason": stub_result["reason"],
@@ -59,8 +62,6 @@ class ClaimService:
         })
 
         return stub_result
-
-    # ── History ────────────────────────────────────────────────
 
     def get_history(self) -> list[dict]:
         """

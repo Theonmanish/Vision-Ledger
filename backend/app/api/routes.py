@@ -21,11 +21,12 @@ from app.schemas.claims import (
 from app.services.storage_service import StorageService
 from app.services.claim_service import ClaimService
 
-# ── Router ─────────────────────────────────────────────────────
+# -- Router --
 
 router = APIRouter()
 
-# ── Dependency-injected services ──────────────────────────────
+
+# -- Dependency-injected services --
 
 def _storage_service() -> StorageService:
     """Yield a fresh StorageService per request."""
@@ -42,7 +43,7 @@ StorageDep = Annotated[StorageService, Depends(_storage_service)]
 ClaimDep = Annotated[ClaimService, Depends(_claim_service)]
 
 
-# ── GET / ────────────────────────────────────────────────────
+# -- GET / --
 
 @router.get(
     "/",
@@ -57,7 +58,7 @@ async def root() -> StatusResponse:
     )
 
 
-# ── GET /health ──────────────────────────────────────────────
+# -- GET /health --
 
 @router.get(
     "/health",
@@ -69,7 +70,7 @@ async def health() -> HealthResponse:
     return HealthResponse()
 
 
-# ── POST /upload ─────────────────────────────────────────────
+# -- POST /upload --
 
 @router.post(
     "/upload",
@@ -101,26 +102,32 @@ async def upload(
     return UploadResponse(**result)
 
 
-# ── POST /verify ─────────────────────────────────────────────
+# -- POST /verify --
 
 @router.post(
     "/verify",
     response_model=VerifyResponse,
     summary="Verify a claim",
     description=(
-        "Submit an image URL for AI-based claim verification. "
+        "Submit a claim with an image URL for AI-based verification. "
         "Currently returns a stub response — AI integration pending."
     ),
 )
 async def verify(
-    image_url: str | None = Form(None, description="Public URL of the uploaded image"),
+    claim_type: str = Form(..., description="Type of the claim"),
+    description: str = Form(..., description="Description of the claim"),
+    image_url: str = Form(..., description="Public URL of the uploaded image"),
     claims: ClaimDep = ClaimService(),
 ) -> VerifyResponse:
-    result = claims.verify(image_url=image_url)
+    result = claims.verify(
+        claim_type=claim_type,
+        description=description,
+        image_url=image_url,
+    )
     return VerifyResponse(**result)
 
 
-# ── GET /history ─────────────────────────────────────────────
+# -- GET /history --
 
 @router.get(
     "/history",

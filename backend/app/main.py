@@ -18,7 +18,7 @@ from app.core.errors import AppException
 from app.api.routes import router
 
 
-# ── Lifespan — one-time startup / shutdown hooks ──────────────
+# -- Lifespan -- one-time startup / shutdown hooks --
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
@@ -28,16 +28,16 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     Use this hook to initialise heavyweight resources (connection
     pools, ML model warm-up, etc.) and tear them down cleanly.
     """
-    # ── Startup ───────────────────────────────────────────────
+    # -- Startup --
     print(f"⚡ {settings.APP_NAME} starting …")
     print(f"   Supabase URL : {settings.SUPABASE_URL}")
     print(f"   Storage bucket: {settings.SUPABASE_BUCKET}")
     yield
-    # ── Shutdown ───────────────────────────────────────────────
+    # -- Shutdown --
     print(f"🛑 {settings.APP_NAME} shutting down.")
 
 
-# ── Application instance ───────────────────────────────────────
+# -- Application instance --
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -47,19 +47,24 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# ── CORS — wide-open for hackathon development ────────────────
+# -- CORS -- configured for localhost frontend --
 # Tighten origins before any public deployment.
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:3000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
-# ── Global exception handler ───────────────────────────────────
+# -- Global exception handler --
 
 @app.exception_handler(AppException)
 async def _handle_app_exception(
@@ -76,6 +81,19 @@ async def _handle_app_exception(
     )
 
 
-# ── Include routers ────────────────────────────────────────────
+# -- Include routers --
 
 app.include_router(router)
+
+
+# -- Run directly with: python -m app.main --
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(
+        "app.main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True,
+    )
