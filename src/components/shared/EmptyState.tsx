@@ -1,7 +1,10 @@
+import { motion } from 'motion/react';
 import { cn } from '../../lib/utils';
 import { LucideIcon, Inbox } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Link } from 'react-router-dom';
+import { GlassCard } from '../ui/glass-card';
+import { ds } from '../../lib/design-tokens';
 
 interface EmptyStateProps {
   icon?: LucideIcon;
@@ -21,24 +24,26 @@ export default function EmptyState({
   className,
 }: EmptyStateProps) {
   return (
-    <div
-      className={cn(
-        'flex flex-col items-center justify-center gap-5 py-16 px-4',
-        className
-      )}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className={cn('flex flex-col items-center justify-center py-16', className)}
     >
-      <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-accent">
-        <Icon className="h-10 w-10 text-muted" />
-      </div>
-      <div className="text-center max-w-sm space-y-2">
-        <h3 className="text-lg font-semibold">{title}</h3>
-        <p className="text-sm text-muted leading-relaxed">{description}</p>
-      </div>
-      {actionLabel && actionPath && (
-        <Button asChild>
-          <Link to={actionPath}>{actionLabel}</Link>
-        </Button>
-      )}
-    </div>
+      <GlassCard padding="lg" className="flex max-w-md flex-col items-center gap-6 text-center">
+        <div className={ds.iconBoxLg}>
+          <Icon className="h-6 w-6" />
+        </div>
+        <div className="space-y-2">
+          <h3 className={ds.heading3}>{title}</h3>
+          <p className={ds.bodySm}>{description}</p>
+        </div>
+        {actionLabel && actionPath && (
+          <Button asChild>
+            <Link to={actionPath}>{actionLabel}</Link>
+          </Button>
+        )}
+      </GlassCard>
+    </motion.div>
   );
 }

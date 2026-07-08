@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { cn } from '../../lib/utils';
+import { ds } from '../../lib/design-tokens';
 
 export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   options: { value: string; label: string }[];
@@ -11,7 +12,8 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
     return (
       <select
         className={cn(
-          'flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none bg-[length:16px_16px] bg-[right_12px_center] bg-no-repeat cursor-pointer',
+          ds.input,
+          'h-11 appearance-none bg-[length:16px_16px] bg-[right_12px_center] bg-no-repeat cursor-pointer',
           className
         )}
         ref={ref}
@@ -23,7 +25,7 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
           </option>
         )}
         {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
+          <option key={opt.value} value={opt.value} className="bg-[#111113]">
             {opt.label}
           </option>
         ))}

@@ -1,29 +1,26 @@
 import { Link } from 'react-router-dom';
+import { Container } from '../ui/container';
 
 export default function Footer() {
   return (
-    <footer className="w-full border-t border-border/50 bg-background">
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Brand */}
-          <div className="space-y-3">
-            <Link to="/" className="inline-flex items-center group">
-              <img
-                src="/logo.svg"
-                alt="VisionLedger"
-                className="h-8 w-auto"
-              />
+    <footer className="relative w-full border-t border-white/[0.08] bg-[#09090B]">
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#2563EB]/30 to-transparent" />
+
+      <Container className="py-14 sm:py-16">
+        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="space-y-4">
+            <Link to="/" className="inline-flex items-center transition-opacity duration-200 hover:opacity-80">
+              <img src="/logo.svg" alt="VisionLedger" className="h-8 w-auto" />
             </Link>
-            <p className="text-sm text-muted leading-relaxed max-w-xs">
+            <p className="max-w-xs text-sm leading-relaxed text-white/50">
               Proof of Reality in an AI-Generated World. Verify claims with AI analysis and
               blockchain-backed records.
             </p>
           </div>
 
-          {/* Product */}
           <div>
-            <h4 className="text-sm font-semibold mb-3">Product</h4>
-            <ul className="space-y-2">
+            <h4 className="mb-4 text-sm font-semibold text-white">Product</h4>
+            <ul className="space-y-3">
               {[
                 { label: 'Verify Evidence', path: '/verify' },
                 { label: 'History', path: '/history' },
@@ -32,7 +29,7 @@ export default function Footer() {
                 <li key={item.label}>
                   <Link
                     to={item.path}
-                    className="text-sm text-muted hover:text-foreground transition-colors duration-200"
+                    className="text-sm text-white/50 transition-colors duration-200 hover:text-white"
                   >
                     {item.label}
                   </Link>
@@ -41,10 +38,9 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Features */}
           <div>
-            <h4 className="text-sm font-semibold mb-3">Features</h4>
-            <ul className="space-y-2">
+            <h4 className="mb-4 text-sm font-semibold text-white">Features</h4>
+            <ul className="space-y-3">
               {[
                 'AI Analysis',
                 'Blockchain Records',
@@ -52,19 +48,18 @@ export default function Footer() {
                 'Real-time Dashboard',
               ].map((item) => (
                 <li key={item}>
-                  <span className="text-sm text-muted">{item}</span>
+                  <span className="text-sm text-white/50">{item}</span>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Legal */}
           <div>
-            <h4 className="text-sm font-semibold mb-3">Legal</h4>
-            <ul className="space-y-2">
+            <h4 className="mb-4 text-sm font-semibold text-white">Legal</h4>
+            <ul className="space-y-3">
               {['Privacy Policy', 'Terms of Service', 'Cookie Policy'].map((item) => (
                 <li key={item}>
-                  <span className="text-sm text-muted hover:text-foreground transition-colors duration-200 cursor-pointer">
+                  <span className="cursor-pointer text-sm text-white/50 transition-colors duration-200 hover:text-white">
                     {item}
                   </span>
                 </li>
@@ -73,12 +68,12 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-10 pt-8 border-t border-border/50 text-center">
-          <p className="text-sm text-muted">
+        <div className="mt-12 border-t border-white/[0.08] pt-8 text-center">
+          <p className="text-sm text-white/40">
             &copy; {new Date().getFullYear()} VisionLedger. All rights reserved.
           </p>
         </div>
-      </div>
+      </Container>
     </footer>
   );
 }

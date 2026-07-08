@@ -1,14 +1,20 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'motion/react';
 import { Button } from '../components/ui/button';
+import { Container } from '../components/ui/container';
+import { PageHeader } from '../components/ui/page-header';
+import { GlassCard } from '../components/ui/glass-card';
+import { BackgroundGlow } from '../components/ui/background-glow';
 import UploadCard from '../components/shared/UploadCard';
 import { Select } from '../components/ui/select';
 import { Textarea } from '../components/ui/textarea';
 import { Progress } from '../components/ui/progress';
+import { ds } from '../lib/design-tokens';
 import type { ClaimType } from '../types';
 import { CLAIM_TYPE_LABELS } from '../types';
 import { uploadImage, verifyClaim, ApiError } from '../lib/api';
-import { ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 
 const CLAIM_TYPE_OPTIONS = Object.entries(CLAIM_TYPE_LABELS).map(([value, label]) => ({
   value,
@@ -118,85 +124,131 @@ export default function Verify() {
   const isValid = file && claimType && description.trim();
 
   return (
-    <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-10 sm:py-16">
-      <div className="mb-10 text-center">
-        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Verify Evidence</h1>
-        <p className="mt-3 text-muted text-lg">
-          Upload an image and provide claim details for AI-powered verification.
-        </p>
-      </div>
+    <div className="relative min-h-[calc(100vh-4rem)] bg-[#09090B]">
+      <BackgroundGlow intensity="subtle" />
 
-      <div className="mb-8">
-        <label className="block text-sm font-medium mb-3">Evidence Image</label>
-        <UploadCard onFileSelect={handleFileSelect} previewUrl={previewUrl} />
-      </div>
+      <Container size="narrow" className="relative z-10 py-10 sm:py-16">
+        <PageHeader
+          badge="New Verification"
+          title="Verify Evidence"
+          description="Upload an image and provide claim details for AI-powered verification."
+        />
 
-      <div className="space-y-6">
-        <div>
-          <label htmlFor="claim-type" className="block text-sm font-medium mb-2">
-            Claim Type
-          </label>
-          <Select
-            id="claim-type"
-            options={CLAIM_TYPE_OPTIONS}
-            placeholder="Select claim type"
-            value={claimType}
-            onChange={(e) => setClaimType(e.target.value as ClaimType)}
-            className="w-full"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="description" className="block text-sm font-medium mb-2">
-            Claim Description
-          </label>
-          <Textarea
-            id="description"
-            placeholder="Describe what you are verifying — e.g., '200 tree saplings planted on March 15, 2026 in the northern section of the Green Valley project.'"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={4}
-            className="w-full resize-none"
-          />
-        </div>
-      </div>
-
-      {isUploading && (
-        <div className="mt-8 space-y-4">
-          <Progress value={progress} className="h-2" />
-          {successMessage && (
-            <div className="flex items-center gap-2 text-sm text-primary">
-              <CheckCircle2 className="h-4 w-4" />
-              <span>{successMessage}</span>
+        <div className="space-y-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
+            <label className={cnLabel()}>Evidence Image</label>
+            <div className="mt-3">
+              <UploadCard onFileSelect={handleFileSelect} previewUrl={previewUrl} />
             </div>
-          )}
-        </div>
-      )}
+          </motion.div>
 
-      {error && (
-        <div className="mt-6 flex items-center gap-2 rounded-lg border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
-          <AlertCircle className="h-4 w-4 shrink-0" />
-          <span>{error}</span>
-        </div>
-      )}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <GlassCard padding="md">
+              <div className="space-y-6">
+                <div>
+                  <label htmlFor="claim-type" className={cnLabel()}>
+                    Claim Type
+                  </label>
+                  <Select
+                    id="claim-type"
+                    options={CLAIM_TYPE_OPTIONS}
+                    placeholder="Select claim type"
+                    value={claimType}
+                    onChange={(e) => setClaimType(e.target.value as ClaimType)}
+                    className="mt-2 w-full"
+                  />
+                </div>
 
-      <div className="mt-8">
-        <Button
-          size="lg"
-          onClick={handleVerify}
-          disabled={!isValid || isUploading}
-          className="w-full sm:w-auto"
-        >
-          {isUploading ? (
-            <>Processing...</>
-          ) : (
-            <>
-              Run Verification
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </>
+                <div>
+                  <label htmlFor="description" className={cnLabel()}>
+                    Claim Description
+                  </label>
+                  <Textarea
+                    id="description"
+                    placeholder="Describe what you are verifying — e.g., '200 tree saplings planted on March 15, 2026 in the northern section of the Green Valley project.'"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    rows={4}
+                    className="mt-2 w-full resize-none"
+                  />
+                </div>
+              </div>
+            </GlassCard>
+          </motion.div>
+
+          {isUploading && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-4"
+            >
+              <GlassCard padding="md">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <Loader2 className="h-5 w-5 animate-spin text-[#3B82F6]" />
+                    <span className="text-sm font-medium text-white">Processing verification</span>
+                  </div>
+                  <Progress value={progress} className="h-2" />
+                  {successMessage && (
+                    <div className="flex items-center gap-2 text-sm text-[#3B82F6]">
+                      <CheckCircle2 className="h-4 w-4" />
+                      <span>{successMessage}</span>
+                    </div>
+                  )}
+                </div>
+              </GlassCard>
+            </motion.div>
           )}
-        </Button>
-      </div>
+
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400 backdrop-blur-sm"
+            >
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>{error}</span>
+            </motion.div>
+          )}
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
+            <Button
+              size="lg"
+              onClick={handleVerify}
+              disabled={!isValid || isUploading}
+              className="w-full sm:w-auto"
+            >
+              {isUploading ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  Run Verification
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </>
+              )}
+            </Button>
+          </motion.div>
+        </div>
+      </Container>
     </div>
   );
+}
+
+function cnLabel() {
+  return ds.label;
 }

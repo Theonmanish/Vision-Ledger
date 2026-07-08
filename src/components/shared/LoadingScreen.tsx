@@ -1,3 +1,4 @@
+import { motion } from 'motion/react';
 import { cn } from '../../lib/utils';
 import { Loader2 } from 'lucide-react';
 
@@ -11,20 +12,19 @@ export default function LoadingScreen({
   className,
 }: LoadingScreenProps) {
   return (
-    <div
-      className={cn(
-        'flex flex-col items-center justify-center gap-6 py-20',
-        className
-      )}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className={cn('flex flex-col items-center justify-center gap-6 py-20', className)}
     >
       <div className="relative">
-        <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl animate-pulse" />
-        <Loader2 className="h-12 w-12 animate-spin text-primary relative" />
+        <div className="absolute inset-0 animate-pulse rounded-full bg-[#2563EB]/20 blur-xl" />
+        <Loader2 className="relative h-12 w-12 animate-spin text-[#3B82F6]" />
       </div>
-      <div className="text-center space-y-1">
-        <p className="text-lg font-medium">{message}</p>
-        <p className="text-sm text-muted">This usually takes a few seconds</p>
+      <div className="space-y-1 text-center">
+        <p className="text-lg font-medium text-white">{message}</p>
+        <p className="text-sm text-white/50">This usually takes a few seconds</p>
       </div>
-    </div>
+    </motion.div>
   );
 }

@@ -9,7 +9,7 @@ import HistoryPage from './pages/History';
 export default function App() {
   return (
     <BrowserRouter>
-      <div className="flex min-h-screen flex-col bg-background">
+      <div className="flex min-h-screen flex-col bg-[#09090B] text-white">
         <Navbar />
         <main className="flex-1">
           <Routes>

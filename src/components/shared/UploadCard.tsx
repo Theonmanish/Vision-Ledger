@@ -1,6 +1,8 @@
 import { useRef, useState, useCallback } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../../lib/utils';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
+import { ds } from '../../lib/design-tokens';
 
 interface UploadCardProps {
   onFileSelect: (file: File | null) => void;
@@ -58,20 +60,23 @@ export default function UploadCard({ onFileSelect, previewUrl, className }: Uplo
   }, [onFileSelect]);
 
   return (
-    <div
+    <motion.div
+      animate={{
+        borderColor: isDragOver ? 'rgba(37, 99, 235, 0.5)' : 'rgba(255, 255, 255, 0.08)',
+        scale: isDragOver ? 1.01 : 1,
+      }}
+      transition={{ duration: 0.2 }}
       className={cn(
-        'relative overflow-hidden rounded-2xl border-2 border-dashed transition-all duration-300',
-        isDragOver
-          ? 'border-primary bg-primary/5 shadow-[0_0_30px] shadow-primary/20'
-          : previewUrl
-            ? 'border-border bg-card'
-            : 'border-border/60 bg-card/50 hover:border-primary/40 hover:bg-accent/30',
+        ds.glassPanel,
+        'relative overflow-hidden border-2 border-dashed transition-shadow duration-300',
+        isDragOver && 'shadow-[0_0_40px_rgba(37,99,235,0.2)]',
         className
       )}
       onDrop={handleDrop}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
     >
+      <div className="absolute inset-0 bg-noise opacity-10" />
       <input
         ref={inputRef}
         type="file"
@@ -80,58 +85,73 @@ export default function UploadCard({ onFileSelect, previewUrl, className }: Uplo
         onChange={handleChange}
       />
 
-      {previewUrl ? (
-        <div className="relative group">
-          <img
-            src={previewUrl}
-            alt="Preview"
-            className="w-full h-64 sm:h-80 object-cover"
-          />
-          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-            <button
-              onClick={() => inputRef.current?.click()}
-              className="text-white text-sm font-medium underline-offset-2 hover:underline"
-            >
-              Change image
-            </button>
-          </div>
-          <button
-            onClick={handleRemove}
-            className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 transition-all duration-200 cursor-pointer"
-            aria-label="Remove image"
+      <AnimatePresence mode="wait">
+        {previewUrl ? (
+          <motion.div
+            key="preview"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="relative group"
           >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-      ) : (
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          className="flex w-full flex-col items-center justify-center gap-4 px-6 py-12 sm:py-16 cursor-pointer"
-        >
-          <div className={cn(
-            'flex h-16 w-16 items-center justify-center rounded-2xl transition-all duration-300',
-            isDragOver ? 'bg-primary text-white scale-110' : 'bg-accent text-muted'
-          )}>
-            {isDragOver ? (
-              <Upload className="h-7 w-7" />
-            ) : (
-              <ImageIcon className="h-7 w-7" />
-            )}
-          </div>
-          <div className="text-center space-y-1">
-            <p className="text-base font-medium">
-              {isDragOver ? 'Drop your image here' : 'Upload evidence image'}
-            </p>
-            <p className="text-sm text-muted">
-              Drag & drop or click to browse
-            </p>
-            <p className="text-xs text-muted/60 mt-1">
-              PNG, JPG, JPEG up to 10MB
-            </p>
-          </div>
-        </button>
-      )}
-    </div>
+            <img
+              src={previewUrl}
+              alt="Preview"
+              className="relative z-10 h-64 w-full object-cover sm:h-80"
+            />
+            <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+              <button
+                type="button"
+                onClick={() => inputRef.current?.click()}
+                className="rounded-full border border-white/[0.08] bg-white/10 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+              >
+                Change image
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={handleRemove}
+              className="absolute right-3 top-3 z-30 flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.08] bg-black/60 text-white backdrop-blur-sm transition-all duration-200 hover:bg-black/80"
+              aria-label="Remove image"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </motion.div>
+        ) : (
+          <motion.button
+            key="upload"
+            type="button"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => inputRef.current?.click()}
+            className="relative z-10 flex w-full cursor-pointer flex-col items-center justify-center gap-5 px-6 py-14 sm:py-20"
+          >
+            <motion.div
+              animate={{ scale: isDragOver ? 1.1 : 1 }}
+              className={cn(
+                'flex h-16 w-16 items-center justify-center rounded-2xl transition-colors duration-300',
+                isDragOver
+                  ? 'bg-[#2563EB] text-white shadow-[0_0_30px_rgba(37,99,235,0.4)]'
+                  : 'border border-white/[0.08] bg-[#2563EB]/15 text-[#3B82F6]'
+              )}
+            >
+              {isDragOver ? (
+                <Upload className="h-7 w-7" />
+              ) : (
+                <ImageIcon className="h-7 w-7" />
+              )}
+            </motion.div>
+            <div className="space-y-1.5 text-center">
+              <p className="text-base font-medium text-white">
+                {isDragOver ? 'Drop your image here' : 'Upload evidence image'}
+              </p>
+              <p className="text-sm text-white/50">Drag & drop or click to browse</p>
+              <p className="mt-1 text-xs text-white/30">PNG, JPG, JPEG up to 10MB</p>
+            </div>
+          </motion.button>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }

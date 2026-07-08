@@ -1,31 +1,45 @@
+import { motion } from 'motion/react';
 import { cn } from '../../lib/utils';
 import { LucideIcon } from 'lucide-react';
+import { ds } from '../../lib/design-tokens';
 
 interface FeatureCardProps {
   icon: LucideIcon;
   title: string;
   description: string;
   className?: string;
+  index?: number;
 }
 
-export default function FeatureCard({ icon: Icon, title, description, className }: FeatureCardProps) {
+export default function FeatureCard({
+  icon: Icon,
+  title,
+  description,
+  className,
+  index = 0,
+}: FeatureCardProps) {
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-60px' }}
+      transition={{ duration: 0.5, delay: index * 0.1 }}
       className={cn(
-        'group relative overflow-hidden rounded-xl border border-border/50 bg-card p-6 transition-all duration-300 hover:border-primary/30 hover:shadow-[0_0_30px] hover:shadow-primary/10',
+        ds.glassCard,
+        ds.glassCardHover,
+        'group p-6',
         className
       )}
     >
-      {/* Hover glow */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#2563EB]/10 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
 
       <div className="relative z-10 space-y-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary transition-all duration-300 group-hover:bg-primary/20 group-hover:scale-105">
-          <Icon className="h-6 w-6" />
+        <div className={cn(ds.iconBoxLg, 'transition-transform duration-300 group-hover:scale-105')}>
+          <Icon className="h-5 w-5" />
         </div>
-        <h3 className="text-lg font-semibold">{title}</h3>
-        <p className="text-sm text-muted leading-relaxed">{description}</p>
+        <h3 className={ds.heading3}>{title}</h3>
+        <p className={ds.bodySm}>{description}</p>
       </div>
-    </div>
+    </motion.div>
   );
 }

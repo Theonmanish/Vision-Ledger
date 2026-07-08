@@ -1,8 +1,25 @@
 import { Link } from 'react-router-dom';
+import { motion } from 'motion/react';
 import { Button } from '../components/ui/button';
+import { Container } from '../components/ui/container';
+import { Section } from '../components/ui/section';
+import { Timeline } from '../components/ui/timeline';
+import { GlassCard } from '../components/ui/glass-card';
 import FeatureCard from '../components/shared/FeatureCard';
 import Hero from '../components/hero/Hero';
-import { Shield, Cpu, FileCheck, BarChart3, ArrowRight } from 'lucide-react';
+import { ds } from '../lib/design-tokens';
+import { scrollReveal } from '../lib/motion';
+import { cn } from '../lib/utils';
+import {
+  Shield,
+  Cpu,
+  FileCheck,
+  BarChart3,
+  ArrowRight,
+  Upload,
+  Link2,
+  FileBadge,
+} from 'lucide-react';
 
 const FEATURES = [
   {
@@ -33,100 +50,106 @@ const FEATURES = [
 
 const HOW_IT_WORKS = [
   {
-    step: '01',
+    icon: Upload,
     title: 'Upload Evidence',
-    description: 'Submit images or documents related to your claim — tree plantation, solar installation, or construction progress.',
+    description:
+      'Submit images or documents related to your claim — tree plantation, solar installation, or construction progress.',
   },
   {
-    step: '02',
+    icon: Cpu,
     title: 'AI Analysis',
-    description: 'Our computer vision engine analyzes the evidence, detecting objects and assessing claim validity with confidence scoring.',
+    description:
+      'Our computer vision engine analyzes the evidence, detecting objects and assessing claim validity with confidence scoring.',
   },
   {
-    step: '03',
-    title: 'Blockchain Record',
-    description: 'Results are hashed and recorded on the Ethereum Sepolia network, creating a permanent, tamper-proof record.',
+    icon: Link2,
+    title: 'Blockchain Verification',
+    description:
+      'Results are hashed and recorded on the Ethereum Sepolia network, creating a permanent, tamper-proof record.',
   },
   {
-    step: '04',
-    title: 'Get Your Certificate',
-    description: 'Download a verifiable certificate with transaction hash, block number, and timestamp for your records.',
+    icon: FileBadge,
+    title: 'Certificate Generation',
+    description:
+      'Download a verifiable certificate with transaction hash, block number, and timestamp for your records.',
   },
 ];
 
 export default function Landing() {
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col bg-[#09090B]">
       <Hero />
 
-      {/* Features Section */}
-      <section className="border-t border-border/50 bg-background">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
+      <Section bordered className="relative">
+        <Container>
+          <motion.div
+            {...scrollReveal}
+            transition={scrollReveal.transition}
+            className="mb-14 text-center"
+          >
+            <span className={ds.badge}>Platform Features</span>
+            <h2 className={cn('mt-4', ds.heading2)}>
               Everything you need to verify claims
             </h2>
-            <p className="mt-4 text-muted text-lg max-w-2xl mx-auto">
+            <p className={cn('mx-auto mt-4 max-w-2xl', ds.body)}>
               From AI analysis to blockchain records — a complete verification toolkit.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {FEATURES.map((feature) => (
-              <FeatureCard key={feature.title} {...feature} />
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {FEATURES.map((feature, index) => (
+              <FeatureCard key={feature.title} {...feature} index={index} />
             ))}
           </div>
-        </div>
-      </section>
+        </Container>
+      </Section>
 
-      {/* How It Works Section */}
-      <section id="how-it-works" className="border-t border-border/50 bg-background/50">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
-              How It Works
-            </h2>
-            <p className="mt-4 text-muted text-lg max-w-2xl mx-auto">
+      <Section id="how-it-works" bordered className="relative bg-[#09090B]">
+        <Container>
+          <motion.div
+            {...scrollReveal}
+            transition={scrollReveal.transition}
+            className="mb-16 text-center"
+          >
+            <span className={ds.badge}>Workflow</span>
+            <h2 className={cn('mt-4', ds.heading2)}>How It Works</h2>
+            <p className={cn('mx-auto mt-4 max-w-2xl', ds.body)}>
               Four simple steps to verify any claim with AI-powered analysis and blockchain security.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {HOW_IT_WORKS.map((item, index) => (
-              <div key={item.step} className="relative">
-                {index < HOW_IT_WORKS.length - 1 && (
-                  <div className="hidden lg:block absolute top-8 left-[60%] w-[80%] h-px border-t border-dashed border-border/40" />
-                )}
-                <div className="relative flex flex-col items-center text-center gap-4">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary text-xl font-bold">
-                    {item.step}
-                  </div>
-                  <h3 className="text-lg font-semibold">{item.title}</h3>
-                  <p className="text-sm text-muted leading-relaxed">{item.description}</p>
-                </div>
+          <Timeline steps={HOW_IT_WORKS} />
+        </Container>
+      </Section>
+
+      <Section bordered className="relative">
+        <Container size="narrow">
+          <motion.div
+            {...scrollReveal}
+            transition={scrollReveal.transition}
+            className="text-center"
+          >
+            <GlassCard hover padding="lg" rounded="2xl" className="mx-auto max-w-3xl">
+              <div className="absolute inset-0 bg-gradient-to-br from-[#2563EB]/10 via-transparent to-transparent opacity-50" />
+              <div className="relative z-10 space-y-6">
+                <h2 className={ds.heading2}>Ready to verify your claims?</h2>
+                <p className={cn('mx-auto max-w-xl', ds.body)}>
+                  Upload your evidence and get AI-powered verification results with
+                  blockchain-backed certificates in minutes.
+                </p>
+                <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }}>
+                  <Button size="lg" asChild>
+                    <Link to="/verify">
+                      Get Started Now
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Link>
+                  </Button>
+                </motion.div>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Final CTA */}
-      <section className="border-t border-border/50 bg-background">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-20 sm:py-28 text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
-            Ready to verify your claims?
-          </h2>
-          <p className="text-muted text-lg max-w-xl mx-auto mb-8">
-            Upload your evidence and get AI-powered verification results with blockchain-backed certificates in minutes.
-          </p>
-          <Button size="lg" asChild>
-            <Link to="/verify">
-              Get Started Now
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Link>
-          </Button>
-        </div>
-      </section>
+            </GlassCard>
+          </motion.div>
+        </Container>
+      </Section>
     </div>
   );
 }
