@@ -9,7 +9,7 @@ import { BackgroundGlow } from '../components/ui/background-glow';
 import StatusBadge from '../components/shared/StatusBadge';
 import ResultCard from '../components/shared/ResultCard';
 import LoadingScreen from '../components/shared/LoadingScreen';
-import MetricCard from '../components/shared/MetricCard';
+import DashboardCard from '../components/shared/DashboardCard';
 import { ds } from '../lib/design-tokens';
 import {
   ArrowLeft,
@@ -221,10 +221,10 @@ export default function Results() {
         </motion.div>
 
         <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <MetricCard icon={Shield} label="Status" value={statusInfo.title.split(' ')[0]} />
-          <MetricCard icon={Brain} label="Confidence" value={formatConfidence(result.confidenceScore)} />
-          <MetricCard icon={Hash} label="Block" value={`#${result.blockchain.blockNumber.toLocaleString()}`} />
-          <MetricCard icon={FileCheck} label="Objects" value={result.detectedObjects.length} />
+          <DashboardCard icon={Shield} label="Status" value={statusInfo.title.split(' ')[0]} />
+          <DashboardCard icon={Brain} label="Confidence" value={formatConfidence(result.confidenceScore)} />
+          <DashboardCard icon={Hash} label="Block" value={`#${result.blockchain.blockNumber.toLocaleString()}`} />
+          <DashboardCard icon={FileCheck} label="Objects" value={result.detectedObjects.length} />
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">

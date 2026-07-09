@@ -38,4 +38,12 @@ export const ds = {
     'inline-flex h-12 items-center justify-center rounded-full border border-white/[0.08] px-8 text-base font-medium text-white transition-colors hover:bg-white/10',
   btnGhost:
     'inline-flex items-center justify-center rounded-full text-sm font-medium text-white/60 transition-colors hover:bg-white/10 hover:text-white',
+  overlay:
+    'absolute inset-0 bg-gradient-to-br from-[#2563EB]/10 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100',
+  overlayVisible:
+    'absolute inset-0 bg-gradient-to-br from-[#2563EB]/10 via-transparent to-transparent opacity-50',
+  errorAlert:
+    'flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400 backdrop-blur-sm',
+  metricLabel: 'text-[10px] uppercase tracking-wider text-white/40',
+  metricValue: 'text-2xl font-bold tracking-tight text-white',
 } as const;

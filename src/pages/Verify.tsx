@@ -212,7 +212,7 @@ export default function Verify() {
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400 backdrop-blur-sm"
+              className={ds.errorAlert}
             >
               <AlertCircle className="h-4 w-4 shrink-0" />
               <span>{error}</span>

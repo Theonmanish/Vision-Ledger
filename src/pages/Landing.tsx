@@ -97,8 +97,8 @@ export default function Landing() {
           </motion.div>
 
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {FEATURES.map((feature, index) => (
-              <FeatureCard key={feature.title} {...feature} index={index} />
+            {FEATURES.map((feature) => (
+              <FeatureCard key={feature.title} {...feature} />
             ))}
           </div>
         </Container>
@@ -130,7 +130,7 @@ export default function Landing() {
             className="text-center"
           >
             <GlassCard hover padding="lg" rounded="2xl" className="mx-auto max-w-3xl">
-              <div className="absolute inset-0 bg-gradient-to-br from-[#2563EB]/10 via-transparent to-transparent opacity-50" />
+              <div className={ds.overlayVisible} />
               <div className="relative z-10 space-y-6">
                 <h2 className={ds.heading2}>Ready to verify your claims?</h2>
                 <p className={cn('mx-auto max-w-xl', ds.body)}>

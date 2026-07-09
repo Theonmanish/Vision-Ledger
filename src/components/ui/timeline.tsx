@@ -68,7 +68,7 @@ export function Timeline({ steps, className }: TimelineProps) {
                 )}
               >
                 <div className={cn(ds.glassCard, ds.glassCardHover, 'group p-6 md:max-w-md', !isEven && 'md:ml-auto')}>
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#2563EB]/10 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                  <div className={ds.overlay} />
                   <div className="relative z-10 flex gap-4 md:hidden">
                     <div className={ds.iconBoxLg}>
                       <Icon className="h-5 w-5" />

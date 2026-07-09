@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
+import { fadeUp } from '../../lib/motion';
 import {
   ArrowDown,
   ArrowRight,
@@ -11,10 +12,7 @@ import {
   FileBadge,
 } from 'lucide-react';
 
-const fadeUp = {
-  initial: { opacity: 0, y: 24 },
-  animate: { opacity: 1, y: 0 },
-};
+
 
 const pipelineSteps = [
   {
