@@ -17,12 +17,13 @@ interface TimelineProps {
 export function Timeline({ steps, className }: TimelineProps) {
   return (
     <div className={cn('relative', className)}>
-      <div className="absolute left-6 top-0 hidden h-full w-px bg-gradient-to-b from-[#2563EB]/40 via-[#3B82F6]/20 to-transparent md:left-1/2 md:-translate-x-px md:block" />
+      {/* Center Line */}
+      <div className="absolute left-1/2 top-0 hidden h-full w-px -translate-x-1/2 bg-gradient-to-b from-[#2563EB]/40 via-[#3B82F6]/20 to-transparent md:block" />
 
-      <div className="space-y-8 md:space-y-0">
+      <div className="space-y-10">
         {steps.map((step, index) => {
           const Icon = step.icon;
-          const isEven = index % 2 === 0;
+          const isLeft = index % 2 !== 0;
 
           return (
             <motion.div
@@ -31,65 +32,73 @@ export function Timeline({ steps, className }: TimelineProps) {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-80px' }}
               transition={{ duration: 0.6, delay: index * 0.15 }}
-              className={cn(
-                'relative md:grid md:grid-cols-2 md:gap-8 md:py-6',
-                !isEven && 'md:direction-rtl'
-              )}
+              className="relative grid grid-cols-1 md:grid-cols-2 md:gap-16"
             >
+              {/* LEFT SIDE */}
               <div
                 className={cn(
                   'hidden md:block',
-                  isEven ? 'md:pr-12 md:text-right' : 'md:col-start-2 md:pl-12 md:text-left'
+                  isLeft ? '' : 'opacity-0 pointer-events-none'
                 )}
               >
-                {!isEven && (
-                  <div className="space-y-2">
+                <div className={cn(ds.glassCard, ds.glassCardHover, 'ml-auto max-w-md p-6')}>
+                  <div className={ds.overlay} />
+                  <div className="relative z-10 space-y-2">
+                    <span className="text-xs font-medium text-[#3B82F6]">
+                      Step {String(index + 1).padStart(2, '0')}
+                    </span>
                     <h3 className={ds.heading3}>{step.title}</h3>
                     <p className={ds.bodySm}>{step.description}</p>
                   </div>
-                )}
-              </div>
-
-              <div
-                className={cn(
-                  'absolute left-6 top-6 z-10 hidden -translate-x-1/2 md:left-1/2 md:flex md:items-center md:justify-center',
-                  'h-12 w-12 rounded-xl border border-white/[0.08] bg-[#111113] shadow-[0_0_20px_rgba(37,99,235,0.15)]'
-                )}
-              >
-                <div className={ds.iconBoxLg}>
-                  <Icon className="h-5 w-5" />
                 </div>
               </div>
 
+              {/* RIGHT SIDE */}
               <div
                 className={cn(
-                  'md:col-span-1',
-                  isEven ? 'md:col-start-2 md:pl-12' : 'md:pr-12 md:text-right'
+                  'hidden md:block',
+                  !isLeft ? '' : 'opacity-0 pointer-events-none'
                 )}
               >
-                <div className={cn(ds.glassCard, ds.glassCardHover, 'group p-6 md:max-w-md', !isEven && 'md:ml-auto')}>
+                <div className={cn(ds.glassCard, ds.glassCardHover, 'max-w-md p-6')}>
                   <div className={ds.overlay} />
-                  <div className="relative z-10 flex gap-4 md:hidden">
+                  <div className="relative z-10 space-y-2">
+                    <span className="text-xs font-medium text-[#3B82F6]">
+                      Step {String(index + 1).padStart(2, '0')}
+                    </span>
+                    <h3 className={ds.heading3}>{step.title}</h3>
+                    <p className={ds.bodySm}>{step.description}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* CENTER ICON */}
+              <div className="absolute left-1/2 top-8 hidden -translate-x-1/2 md:flex">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/[0.08] bg-[#111113] shadow-[0_0_20px_rgba(37,99,235,0.15)]">
+                  <div className={ds.iconBoxLg}>
+                    <Icon className="h-5 w-5" />
+                  </div>
+                </div>
+              </div>
+
+              {/* MOBILE */}
+              <div className="md:hidden">
+                <div className={cn(ds.glassCard, ds.glassCardHover, 'p-6')}>
+                  <div className={ds.overlay} />
+                  <div className="relative z-10 flex gap-4">
                     <div className={ds.iconBoxLg}>
                       <Icon className="h-5 w-5" />
                     </div>
+
                     <div className="space-y-2">
-                      <span className="text-xs font-medium text-[#3B82F6]">Step {String(index + 1).padStart(2, '0')}</span>
+                      <span className="text-xs font-medium text-[#3B82F6]">
+                        Step {String(index + 1).padStart(2, '0')}
+                      </span>
+
                       <h3 className={ds.heading3}>{step.title}</h3>
+
                       <p className={ds.bodySm}>{step.description}</p>
                     </div>
-                  </div>
-                  <div className="relative z-10 hidden md:block space-y-2">
-                    {isEven && (
-                      <>
-                        <span className="text-xs font-medium text-[#3B82F6]">Step {String(index + 1).padStart(2, '0')}</span>
-                        <h3 className={ds.heading3}>{step.title}</h3>
-                        <p className={ds.bodySm}>{step.description}</p>
-                      </>
-                    )}
-                    {!isEven && (
-                      <span className="text-xs font-medium text-[#3B82F6]">Step {String(index + 1).padStart(2, '0')}</span>
-                    )}
                   </div>
                 </div>
               </div>
