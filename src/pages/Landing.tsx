@@ -77,7 +77,7 @@ const HOW_IT_WORKS = [
 
 export default function Landing() {
   return (
-    <div className="flex flex-col bg-[#09090B]">
+    <div className="flex flex-col">
       <Hero />
 
       <Section bordered className="relative">

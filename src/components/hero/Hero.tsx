@@ -114,7 +114,7 @@ function DashboardPreview() {
       initial={{ opacity: 0, y: 40 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.7, delay: 0.5 }}
-      className="relative mx-auto mt-16 w-full max-w-6xl sm:mt-20"
+      className="relative mx-auto mt-8 w-full max-w-6xl sm:mt-10"
     >
       <div className="absolute inset-0 rounded-2xl bg-[#2563EB]/20 blur-[80px] opacity-30" />
 
@@ -180,7 +180,7 @@ export default function Hero() {
   return (
     <section className="relative overflow-hidden bg-[#09090B]">
       {/* Animated gradient background */}
-      <div className="pointer-events-none absolute -right-60 -top-10 z-0 flex flex-col items-end blur-xl">
+      <div >
         <motion.div
           animate={{ x: [0, 30, 0], opacity: [0.6, 0.8, 0.6] }}
           transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
@@ -199,7 +199,7 @@ export default function Hero() {
       </div>
       <div className="absolute inset-0 z-0 bg-noise opacity-30" />
 
-      <div className="relative z-10 mx-auto max-w-7xl px-4 pb-20 pt-12 text-center sm:px-6 sm:pb-28 sm:pt-16 lg:px-8">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 pb-20 pt-2 text-center sm:px-6 sm:pb-28 sm:pt-4 lg:px-8">
         {/* Badge */}
         <motion.div
           {...fadeUp}
