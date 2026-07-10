@@ -62,7 +62,18 @@ class ClaimService:
             description=description,
         )
 
-        status = "Verified" if ai_result.claim_supported else "Rejected"
+        # Determine status based on verification_confidence
+        verification_confidence = ai_result.verification_confidence
+        if verification_confidence >= 90:
+            status = "Verified"
+        elif verification_confidence >= 75:
+            status = "Likely Verified"
+        elif verification_confidence >= 50:
+            status = "Needs Review"
+        elif verification_confidence >= 25:
+            status = "Inconclusive"
+        else:
+            status = "Rejected"
 
         # ── Blockchain anchor (best-effort, never breaks AI flow) ──
         timestamp = datetime.now(timezone.utc).isoformat()
@@ -99,6 +110,9 @@ class ClaimService:
             "claimId": claim_code,
             "status": status,
             "confidence": ai_result.confidence,
+            "vision_confidence": ai_result.vision_confidence,
+            "claim_match_confidence": ai_result.claim_match_confidence,
+            "verification_confidence": ai_result.verification_confidence,
             "reason": ai_result.reason,
             "claim_supported": ai_result.claim_supported,
             "objects_detected": ai_result.objects_detected,
@@ -127,26 +141,29 @@ class ClaimService:
                 f"{settings.ETHERSCAN_BASE_URL}/tx/{anchor.transaction_hash}"
             )
 
-        saved = self._db.create_claim(
-            build_claim_payload(
-                claim_code=claim_code,
-                claim_type=claim_type,
-                description=description,
-                image_url=image_url,
-                status=status,
-                confidence=ai_result.confidence,
-                reason=ai_result.reason,
-                tx_hash=tx_hash,
-                claim_supported=ai_result.claim_supported,
-                objects_detected=ai_result.objects_detected,
-                estimated_quantity=ai_result.estimated_quantity,
-                limitations=ai_result.limitations,
-                recommendation=ai_result.recommendation,
-                blockchain=blockchain_payload,
-                user_id=user_id,
-                user_email=user_email,
-            )
+        payload = build_claim_payload(
+            claim_code=claim_code,
+            claim_type=claim_type,
+            description=description,
+            image_url=image_url,
+            status=status,
+            confidence=ai_result.confidence,
+            reason=ai_result.reason,
+            tx_hash=tx_hash,
+            claim_supported=ai_result.claim_supported,
+            objects_detected=ai_result.objects_detected,
+            estimated_quantity=ai_result.estimated_quantity,
+            limitations=ai_result.limitations,
+            recommendation=ai_result.recommendation,
+            blockchain=blockchain_payload,
+            user_id=user_id,
+            user_email=user_email,
+            vision_confidence=ai_result.vision_confidence,
+            claim_match_confidence=ai_result.claim_match_confidence,
+            verification_confidence=ai_result.verification_confidence,
         )
+
+        saved = self._db.create_claim(payload)
 
         if saved:
             normalized = normalize_claim_record(saved)

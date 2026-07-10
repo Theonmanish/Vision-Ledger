@@ -71,6 +71,9 @@ def normalize_claim_record(row: dict[str, Any]) -> dict[str, Any]:
         "description": row.get("description"),
         "status": row.get("status"),
         "confidence": float(row.get("confidence") or 0) / 100.0,
+        "vision_confidence": claim_input.get("vision_confidence", 0),
+        "claim_match_confidence": claim_input.get("claim_match_confidence", 0),
+        "verification_confidence": claim_input.get("verification_confidence", 0),
         "reason": row.get("reason"),
         "image_url": (row.get("image_url") or "").rstrip("?"),
         "created_at": row.get("created_at"),
@@ -107,13 +110,16 @@ def build_claim_payload(
     reason: str,
     tx_hash: str,
     claim_supported: bool,
-    objects_detected: list[str],
+    objects_detected: list[dict[str, Any]],
     estimated_quantity: int | None,
     limitations: str,
     recommendation: str,
     blockchain: dict[str, Any] | None = None,
     user_id: str | None = None,
     user_email: str | None = None,
+    vision_confidence: int = 0,
+    claim_match_confidence: int = 0,
+    verification_confidence: int = 0,
 ) -> dict[str, Any]:
     """Build an insert payload compatible with the live Supabase schema.
 
@@ -129,6 +135,9 @@ def build_claim_payload(
         "estimated_quantity": estimated_quantity,
         "limitations": limitations,
         "recommendation": recommendation,
+        "vision_confidence": vision_confidence,
+        "claim_match_confidence": claim_match_confidence,
+        "verification_confidence": verification_confidence,
     }
     if blockchain:
         claim_input["blockchain"] = blockchain

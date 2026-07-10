@@ -188,14 +188,28 @@ async def get_claim(
     claims: ClaimDep,
     current_user: dict = Depends(get_current_user),
 ) -> ClaimDetailResponse:
+    # DEBUG: Log the request details
+    print(f"[DEBUG] GET /claims/{claim_id}")
+    print(f"[DEBUG] Requested UUID: {claim_id}")
+    print(f"[DEBUG] Authenticated User ID: {current_user['id']}")
+    print(f"[DEBUG] Authenticated User Email: {current_user['email']}")
+
     claim = claims.get_claim(claim_id)
     if not claim:
+        print(f"[DEBUG] Claim not found in database")
         raise not_found("Claim")
+
+    print(f"[DEBUG] Database Claim Owner (user_id): {claim.get('user_id')}")
+    print(f"[DEBUG] Comparison: {claim.get('user_id')} == {current_user['id']} -> {claim.get('user_id') == current_user['id']}")
+
     if claim.get("user_id") != current_user["id"]:
+        print(f"[DEBUG] OWNERSHIP CHECK FAILED - Returning 403")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to access this claim",
         )
+
+    print(f"[DEBUG] Ownership check passed - Returning claim")
     return ClaimDetailResponse(**claim)
 
 

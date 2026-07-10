@@ -157,7 +157,11 @@ class CertificateService:
         objects = claim.get("objects_detected") or []
         if isinstance(objects, str):
             objects = [objects]
-        objects_text = ", ".join(objects) if objects else "None detected"
+        # Handle both old format (list of strings) and new format (list of dicts with label/confidence)
+        if objects and isinstance(objects[0], dict):
+            objects_text = ", ".join([obj.get("label", "unknown") for obj in objects]) if objects else "None detected"
+        else:
+            objects_text = ", ".join(objects) if objects else "None detected"
         confidence = float(claim.get("confidence") or 0.0)
         status = claim.get("status") or "Unknown"
         claim_type = (claim.get("claim_type_label") or claim.get("claim_type") or "unknown")

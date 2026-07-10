@@ -10,7 +10,12 @@ function isClaimType(value: string): value is ClaimType {
   return (
     value === 'tree_plantation' ||
     value === 'solar_installation' ||
-    value === 'construction_progress'
+    value === 'construction_progress' ||
+    value === 'package_delivery' ||
+    value === 'waste_processing' ||
+    value === 'infrastructure_inspection' ||
+    value === 'agricultural_monitoring' ||
+    value === 'water_body_monitoring'
   );
 }
 
@@ -92,9 +97,12 @@ export function mapClaimToResult(claim: BackendClaim): VerificationResult {
     claimType,
     status,
     confidenceScore: confidence,
-    detectedObjects: objects.map((label) => ({
-      label,
-      confidence,
+    visionConfidence: claim.vision_confidence ?? 0,
+    claimMatchConfidence: claim.claim_match_confidence ?? 0,
+    verificationConfidence: claim.verification_confidence ?? 0,
+    detectedObjects: objects.map((obj) => ({
+      label: typeof obj === 'string' ? obj : obj.label,
+      confidence: typeof obj === 'string' ? confidence : obj.confidence / 100,
     })),
     aiExplanation: claim.reason ?? 'No analysis summary available.',
     imageUrl: claim.image_url ?? '',

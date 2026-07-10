@@ -386,37 +386,116 @@ export default function Results() {
                 <div className={ds.iconBox}>
                   <Shield className="h-4 w-4" />
                 </div>
-                <p className="font-semibold text-white">Confidence Score</p>
+                <p className="font-semibold text-white">Confidence Scores</p>
               </div>
 
-              <div className="flex justify-center py-2">
-                <div className="relative flex h-32 w-32 items-center justify-center">
-                  <svg className="absolute inset-0 h-full w-full -rotate-90">
-                    <circle
-                      cx="64"
-                      cy="64"
-                      r="54"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="6"
-                      className="text-white/[0.06]"
-                    />
-                    <circle
-                      cx="64"
-                      cy="64"
-                      r="54"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="6"
-                      strokeDasharray={`${2 * Math.PI * 54}`}
-                      strokeDashoffset={`${2 * Math.PI * 54 * (1 - result.confidenceScore)}`}
-                      className="text-[#2563EB] transition-all duration-1000 ease-out"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <span className="text-3xl font-bold text-white">
-                    {formatConfidence(result.confidenceScore)}
-                  </span>
+              <div className="space-y-6 py-2">
+                {/* Vision Confidence */}
+                <div className="flex items-center gap-4">
+                  <div className="relative flex h-20 w-20 items-center justify-center flex-shrink-0">
+                    <svg className="absolute inset-0 h-full w-full -rotate-90">
+                      <circle
+                        cx="40"
+                        cy="40"
+                        r="34"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="5"
+                        className="text-white/[0.06]"
+                      />
+                      <circle
+                        cx="40"
+                        cy="40"
+                        r="34"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="5"
+                        strokeDasharray={`${2 * Math.PI * 34}`}
+                        strokeDashoffset={`${2 * Math.PI * 34 * (1 - result.visionConfidence / 100)}`}
+                        className="text-[#2563EB] transition-all duration-1000 ease-out"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <span className="text-xl font-bold text-white">
+                      {result.visionConfidence}%
+                    </span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-white">👁 Vision Confidence</p>
+                    <p className="text-xs text-white/50 mt-1">Image quality & object detection</p>
+                  </div>
+                </div>
+
+                {/* Claim Match Confidence */}
+                <div className="flex items-center gap-4">
+                  <div className="relative flex h-20 w-20 items-center justify-center flex-shrink-0">
+                    <svg className="absolute inset-0 h-full w-full -rotate-90">
+                      <circle
+                        cx="40"
+                        cy="40"
+                        r="34"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="5"
+                        className="text-white/[0.06]"
+                      />
+                      <circle
+                        cx="40"
+                        cy="40"
+                        r="34"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="5"
+                        strokeDasharray={`${2 * Math.PI * 34}`}
+                        strokeDashoffset={`${2 * Math.PI * 34 * (1 - result.claimMatchConfidence / 100)}`}
+                        className="text-[#F59E0B] transition-all duration-1000 ease-out"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <span className="text-xl font-bold text-white">
+                      {result.claimMatchConfidence}%
+                    </span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-white">🎯 Claim Match</p>
+                    <p className="text-xs text-white/50 mt-1">Evidence alignment with claim</p>
+                  </div>
+                </div>
+
+                {/* Verification Confidence */}
+                <div className="flex items-center gap-4">
+                  <div className="relative flex h-20 w-20 items-center justify-center flex-shrink-0">
+                    <svg className="absolute inset-0 h-full w-full -rotate-90">
+                      <circle
+                        cx="40"
+                        cy="40"
+                        r="34"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="5"
+                        className="text-white/[0.06]"
+                      />
+                      <circle
+                        cx="40"
+                        cy="40"
+                        r="34"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="5"
+                        strokeDasharray={`${2 * Math.PI * 34}`}
+                        strokeDashoffset={`${2 * Math.PI * 34 * (1 - result.verificationConfidence / 100)}`}
+                        className="text-[#10B981] transition-all duration-1000 ease-out"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <span className="text-xl font-bold text-white">
+                      {result.verificationConfidence}%
+                    </span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-white">✅ Verification</p>
+                    <p className="text-xs text-white/50 mt-1">Final verification score</p>
+                  </div>
                 </div>
               </div>
             </GlassCard>

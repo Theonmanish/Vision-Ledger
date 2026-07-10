@@ -20,31 +20,33 @@ async def get_current_user(
 ) -> dict:
     """
     Extract and validate the current user from the JWT token.
-    
+
     Returns:
         dict: User information including 'id' and 'email'
-    
+
     Raises:
         HTTPException: 401 if token is invalid or missing
     """
     try:
         supabase = get_supabase_client()
-        
+
         # Verify the JWT token with Supabase
         user_response = supabase.auth.get_user(credentials.credentials)
-        
+
         if not user_response or not user_response.user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid authentication credentials",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        
-        return {
+
+        user_data = {
             "id": user_response.user.id,
             "email": user_response.user.email,
         }
-        
+
+        return user_data
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
