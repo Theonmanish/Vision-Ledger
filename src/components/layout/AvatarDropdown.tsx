@@ -57,6 +57,10 @@ export default function AvatarDropdown() {
     return email ? email.charAt(0).toUpperCase() : 'U';
   };
 
+  const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email;
+  const avatarUrl = user?.user_metadata?.avatar_url;
+  const provider = user?.app_metadata?.provider;
+
   if (!user) return null;
 
   return (
@@ -65,13 +69,21 @@ export default function AvatarDropdown() {
         variant="ghost"
         size="icon"
         onClick={() => setIsOpen(!isOpen)}
-        className="relative h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition-all"
+        className="relative h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 transition-all overflow-hidden"
         aria-label="User menu"
         aria-expanded={isOpen}
       >
-        <span className="text-white font-semibold text-sm">
-          {getInitials(user.email)}
-        </span>
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt={displayName}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <span className="text-white font-semibold text-sm">
+            {getInitials(user.email)}
+          </span>
+        )}
       </Button>
 
       <AnimatePresence>
@@ -85,16 +97,26 @@ export default function AvatarDropdown() {
           >
             <div className="p-4 border-b border-white/10">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                  <span className="text-white font-semibold text-sm">
-                    {getInitials(user.email)}
-                  </span>
-                </div>
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt={displayName}
+                    className="h-10 w-10 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                    <span className="text-white font-semibold text-sm">
+                      {getInitials(user.email)}
+                    </span>
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-white truncate">
-                    {user.email}
+                    {displayName}
                   </p>
-                  <p className="text-xs text-white/50">Signed in</p>
+                  <p className="text-xs text-white/50">
+                    {provider === 'google' ? 'Signed in with Google' : 'Signed in'}
+                  </p>
                 </div>
               </div>
             </div>
