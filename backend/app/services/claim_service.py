@@ -47,6 +47,8 @@ class ClaimService:
         claim_type: str,
         description: str,
         image_url: str,
+        user_id: str | None = None,
+        user_email: str | None = None,
     ) -> dict:
         """
         Analyse the claim image with AI, persist the result, and
@@ -141,6 +143,8 @@ class ClaimService:
                 limitations=ai_result.limitations,
                 recommendation=ai_result.recommendation,
                 blockchain=blockchain_payload,
+                user_id=user_id,
+                user_email=user_email,
             )
         )
 
@@ -156,11 +160,12 @@ class ClaimService:
         """Return a single claim by its public identifier."""
         return self._db.get_claim_by_id(claim_id)
 
-    def get_history(self) -> list[dict]:
+    def get_history(self, user_id: str | None = None) -> list[dict]:
         """
         Return all stored claims, newest first.
 
+        If user_id is provided, only returns claims belonging to that user.
         Returns an empty list when the table has no rows or when
         the query fails (graceful degradation).
         """
-        return self._db.get_all_claims()
+        return self._db.get_all_claims(user_id=user_id)

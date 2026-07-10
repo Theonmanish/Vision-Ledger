@@ -117,9 +117,42 @@ class SupabaseService:
             logger.exception("Supabase insert failed for table %s", table)
             return None
 
-    def get_all_claims(self) -> list[dict]:
-        """Fetch claims ordered newest-first."""
+    def get_all_claims(self, user_id: str | None = None) -> list[dict]:
+        """
+        Fetch claims ordered newest-first.
+        
+        If user_id is provided, only returns claims belonging to that user.
+        """
+        if user_id:
+            return self._fetch_by_user(user_id)
         return self.fetch_all(CLAIMS_TABLE, CLAIM_COLUMNS)
+
+    def _fetch_by_user(self, user_id: str) -> list[dict]:
+        """
+        Fetch claims for a specific user, ordered newest-first.
+        
+        Returns an empty list on failure rather than raising.
+        """
+        try:
+            resp = (
+                self._client.table(CLAIMS_TABLE)
+                .select(CLAIM_COLUMNS)
+                .eq("user_id", user_id)
+                .order("created_at", desc=True)
+                .execute()
+            )
+            return [normalize_claim_record(row) for row in resp.data]
+        except Exception as exc:
+            # If migration 002 hasn't been applied, the user_id
+            # column won't exist — fall back to fetching all.
+            if "user_id" in str(exc):
+                logger.warning(
+                    "user_id column not found; falling back to fetch_all. "
+                    "Run migration 002 to enable user-based filtering."
+                )
+                return self.fetch_all(CLAIMS_TABLE, CLAIM_COLUMNS)
+            logger.exception("Supabase _fetch_by_user failed for user %s", user_id)
+            return []
 
     def create_claim(self, payload: dict) -> dict | None:
         """Insert a new claim record."""

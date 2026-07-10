@@ -75,6 +75,9 @@ def normalize_claim_record(row: dict[str, Any]) -> dict[str, Any]:
         "image_url": (row.get("image_url") or "").rstrip("?"),
         "created_at": row.get("created_at"),
         "tx_hash": transaction_hash,
+        # ── User ownership (migration 002) ────────────────────────
+        "user_id": row.get("user_id"),
+        "created_by_email": row.get("created_by_email"),
         # ── Blockchain proof (real on-chain values) ───────────────
         "blockchain_hash": blockchain_hash,
         "transaction_hash": transaction_hash,
@@ -109,6 +112,8 @@ def build_claim_payload(
     limitations: str,
     recommendation: str,
     blockchain: dict[str, Any] | None = None,
+    user_id: str | None = None,
+    user_email: str | None = None,
 ) -> dict[str, Any]:
     """Build an insert payload compatible with the live Supabase schema.
 
@@ -149,5 +154,11 @@ def build_claim_payload(
         payload["network"] = blockchain.get("network")
         payload["verification_anchor_time"] = blockchain.get("anchor_time")
         payload["blockchain_status"] = blockchain.get("status") or "Pending"
+
+    # User ownership (migration 002)
+    if user_id:
+        payload["user_id"] = user_id
+    if user_email:
+        payload["created_by_email"] = user_email
 
     return payload
