@@ -49,12 +49,36 @@
   * {
     border-color: var(--color-border);
   }
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    overscroll-behavior-y: none;
+  }
+  img,
+  video {
+    max-width: 100%;
+    height: auto;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
@@ -109,4 +133,30 @@
 *:focus-visible {
   outline: 2px solid var(--color-ring);
   outline-offset: 2px;
+}
+
+/* Safe area insets for notched devices */
+@utility safe-top {
+  padding-top: max(0.5rem, env(safe-area-inset-top));
+}
+
+@utility safe-bottom {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+}
+
+@utility safe-x {
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
+
+/* Minimum touch target size (44x44px) */
+@utility touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Better touch scrolling on iOS */
+@utility scroll-touch {
+  -webkit-overflow-scrolling: touch;
+  overflow-x: auto;
 }
