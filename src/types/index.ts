@@ -19,6 +19,10 @@ export interface BlockchainRecord {
   network: string;
   blockNumber: number;
   timestamp: string;
+  verificationHash?: string;
+  contractAddress?: string;
+  explorerUrl?: string;
+  blockchainStatus?: string;
 }
 
 export interface CertificateRecord {
@@ -47,6 +51,7 @@ export interface HistoryRecord {
   confidence: number;
   date: string;
   transactionHash: string;
+  blockchainStatus?: string;
 }
 
 export const CLAIM_TYPE_LABELS: Record<ClaimType, string> = {

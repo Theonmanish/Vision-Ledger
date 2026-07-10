@@ -67,6 +67,15 @@ export interface BackendClaim {
   estimated_quantity?: number | null;
   limitations?: string;
   recommendation?: string;
+  // Blockchain proof (real on-chain values)
+  blockchain_hash?: string;
+  transaction_hash?: string;
+  block_number?: number | null;
+  network?: string;
+  verification_anchor_time?: string;
+  blockchain_status?: string;
+  contract_address?: string;
+  explorer_url?: string;
 }
 
 export async function checkHealth(): Promise<boolean> {

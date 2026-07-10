@@ -81,7 +81,24 @@ class CertificateService:
         )
 
         issued_at = datetime.now(timezone.utc)
-        tx_hash = claim.get("tx_hash") or placeholder_tx_hash(str(claim_code))
+        tx_hash = (
+            claim.get("transaction_hash")
+            or claim.get("tx_hash")
+            or placeholder_tx_hash(str(claim_code))
+        )
+        # Ensure 0x prefix for real on-chain hashes.
+        if tx_hash and not tx_hash.startswith("0x") and len(tx_hash) == 64:
+            tx_hash = "0x" + tx_hash
+        verification_hash = claim.get("blockchain_hash") or "—"
+        block_number = claim.get("block_number")
+        block_text = f"#{block_number}" if block_number else "N/A"
+        network = claim.get("network") or "Ethereum Sepolia"
+        contract_address = claim.get("contract_address") or "—"
+        blockchain_status = claim.get("blockchain_status") or "Pending"
+        # Build the Etherscan explorer URL from the real tx hash.
+        explorer_url = "—"
+        if tx_hash and tx_hash.startswith("0x") and len(tx_hash) == 66:
+            explorer_url = f"https://sepolia.etherscan.io/tx/{tx_hash}"
         objects = claim.get("objects_detected") or []
         if isinstance(objects, str):
             objects = [objects]
@@ -117,7 +134,12 @@ class CertificateService:
             ["Verification Status", status],
             ["Confidence Score", f"{confidence * 100:.1f}%"],
             ["Estimated Quantity", qty_text],
-            ["Transaction Hash (placeholder)", tx_hash],
+            ["Network", network],
+            ["Blockchain Status", blockchain_status],
+            ["Block Number", block_text],
+            ["Verification Hash", verification_hash],
+            ["Contract Address", contract_address],
+            ["Transaction Hash", tx_hash],
         ]
         table = Table(details, colWidths=[2.2 * inch, 4.3 * inch])
         table.setStyle(
@@ -150,8 +172,20 @@ class CertificateService:
         story.append(Paragraph("Recommendation", section_style))
         story.append(Paragraph(recommendation, body_style))
 
+        story.append(Paragraph("Blockchain Proof", section_style))
+        story.append(
+            Paragraph(
+                f"Network: {network}<br/>"
+                f"Block: {block_text}<br/>"
+                f"Contract: {contract_address}<br/>"
+                f"Explorer: {explorer_url}",
+                body_style,
+            )
+        )
+
         qr_payload = (
-            f"VisionLedger|{claim_code}|{status}|{confidence:.2f}|{tx_hash}"
+            f"VisionLedger|{claim_code}|{status}|{confidence:.2f}|"
+            f"{verification_hash}|{tx_hash}"
         )
         qr_img = qrcode.make(qr_payload)
         qr_buffer = io.BytesIO()

@@ -282,6 +282,21 @@ export default function Results() {
             </ResultCard>
 
             <ResultCard icon={Hash} title="Blockchain Record">
+              <div className="mb-4 flex items-center gap-2">
+                {result.blockchain.blockchainStatus === 'Confirmed' ? (
+                  <Badge variant="default" className="bg-[#22C55E]/15 text-[#22C55E]">
+                    <CheckCircle2 className="mr-1 h-3 w-3" />
+                    Blockchain Verified
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary">
+                    <Clock className="mr-1 h-3 w-3" />
+                    Anchor Pending
+                  </Badge>
+                )}
+                <span className="text-xs text-white/50">{result.blockchain.network}</span>
+              </div>
+
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1">
                   <p className="text-xs text-white/40">Transaction Hash</p>
@@ -300,20 +315,47 @@ export default function Results() {
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs text-white/40">Timestamp</p>
+                  <p className="text-xs text-white/40">Verification Timestamp</p>
                   <p className="text-sm text-white/80">
                     {formatDateTime(result.blockchain.timestamp)}
+                  </p>
+                </div>
+                <div className="space-y-1 sm:col-span-2">
+                  <p className="text-xs text-white/40">Verification Hash</p>
+                  <p className="break-all font-mono text-xs text-white/70">
+                    {result.blockchain.verificationHash ?? '—'}
+                  </p>
+                </div>
+                <div className="space-y-1 sm:col-span-2">
+                  <p className="text-xs text-white/40">Contract Address</p>
+                  <p className="font-mono text-xs text-white/70">
+                    {result.blockchain.contractAddress ?? '—'}
                   </p>
                 </div>
               </div>
 
               <div className="mt-4 border-t border-white/[0.08] pt-4">
-                <Button variant="secondary" size="sm" disabled>
-                  <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
-                  View on Explorer
-                </Button>
+                {result.blockchain.explorerUrl ? (
+                  <Button variant="secondary" size="sm" asChild>
+                    <a
+                      href={result.blockchain.explorerUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
+                      View on Etherscan
+                    </a>
+                  </Button>
+                ) : (
+                  <Button variant="secondary" size="sm" disabled>
+                    <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
+                    View on Explorer
+                  </Button>
+                )}
                 <p className="mt-2 text-xs text-white/40">
-                  Blockchain integration pending — hash shown is a deterministic placeholder.
+                  {result.blockchain.blockchainStatus === 'Confirmed'
+                    ? 'Verification hash cryptographically anchored on Ethereum Sepolia.'
+                    : 'Blockchain anchor pending — this verification will be retry-anchored.'}
                 </p>
               </div>
             </ResultCard>

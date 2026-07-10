@@ -21,7 +21,7 @@ import LoadingScreen from '../components/shared/LoadingScreen';
 import { CLAIM_TYPE_LABELS, type HistoryRecord } from '../types';
 import { formatDate, truncateHash, cn } from '../lib/utils';
 import { fetchHistory, ApiError } from '../lib/api';
-import { Search, Eye, History, AlertCircle } from 'lucide-react';
+import { Search, Eye, History, AlertCircle, Link2 } from 'lucide-react';
 
 export default function HistoryPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -136,7 +136,15 @@ export default function HistoryPage() {
                       </TableCell>
                       <TableCell>{CLAIM_TYPE_LABELS[record.claimType]}</TableCell>
                       <TableCell>
-                        <StatusBadge status={record.status} />
+                        <div className="flex flex-col gap-1">
+                          <StatusBadge status={record.status} />
+                          {record.blockchainStatus === 'Confirmed' && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[#22C55E]">
+                              <Link2 className="h-2.5 w-2.5" />
+                              On-chain
+                            </span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">
                         <div className="flex items-center gap-2">
@@ -156,7 +164,7 @@ export default function HistoryPage() {
                         <Button variant="ghost" size="sm" asChild>
                           <Link to={`/results/${record.claimId}`}>
                             <Eye className="mr-1.5 h-3.5 w-3.5" />
-                            View
+                            View Report
                           </Link>
                         </Button>
                       </TableCell>
