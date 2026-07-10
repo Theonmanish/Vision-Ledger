@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { Loader2, Mail, Lock, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../components/ui/toast';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { GlassCard } from '../components/ui/glass-card';
@@ -14,6 +15,7 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+  const { addToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -26,9 +28,20 @@ export default function Login() {
 
     try {
       await login(email, password);
+      addToast({
+        type: 'success',
+        title: 'Welcome back!',
+        message: 'You have successfully logged in',
+      });
       navigate(from, { replace: true });
     } catch (err: any) {
-      setError(err.message || 'Failed to login');
+      const errorMessage = err.message || 'Failed to login';
+      setError(errorMessage);
+      addToast({
+        type: 'error',
+        title: 'Login failed',
+        message: errorMessage,
+      });
     } finally {
       setLoading(false);
     }
@@ -119,6 +132,11 @@ export default function Login() {
               Don't have an account?{' '}
               <Link to="/signup" className="text-blue-400 hover:text-blue-300 font-medium">
                 Sign up
+              </Link>
+            </p>
+            <p className="text-white/60 text-sm mt-2">
+              <Link to="/forgot-password" className="text-blue-400 hover:text-blue-300 font-medium">
+                Forgot password?
               </Link>
             </p>
           </div>

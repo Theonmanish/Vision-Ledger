@@ -9,6 +9,10 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, fullName: string) => Promise<void>;
   logout: () => Promise<void>;
+  forgotPassword: (email: string) => Promise<void>;
+  resetPassword: (newPassword: string) => Promise<void>;
+  resendVerification: (email: string) => Promise<void>;
+  verifyEmail: (token: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -59,8 +63,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (error) throw error;
   };
 
+  const forgotPassword = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (error) throw error;
+  };
+
+  const resetPassword = async (newPassword: string) => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw error;
+  };
+
+  const resendVerification = async (email: string) => {
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+    });
+    if (error) throw error;
+  };
+
+  const verifyEmail = async (token: string) => {
+    const { error } = await supabase.auth.verifyOtp({
+      token_hash: token,
+      type: 'signup',
+    });
+    if (error) throw error;
+  };
+
   return (
-    <AuthContext.Provider value={{ user, session, loading, login, signup, logout }}>
+    <AuthContext.Provider value={{
+      user,
+      session,
+      loading,
+      login,
+      signup,
+      logout,
+      forgotPassword,
+      resetPassword,
+      resendVerification,
+      verifyEmail,
+    }}>
       {children}
     </AuthContext.Provider>
   );

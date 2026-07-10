@@ -5,6 +5,8 @@ import { Menu, X, LogOut, User } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../ui/toast';
+import AvatarDropdown from './AvatarDropdown';
 
 const NAV_LINKS = [
   { path: '/', label: 'Home' },
@@ -16,6 +18,7 @@ export default function Navbar() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, logout } = useAuth();
+  const { addToast } = useToast();
 
   useEffect(() => {
     setMobileOpen(false);
@@ -29,8 +32,21 @@ export default function Navbar() {
   }, [mobileOpen]);
 
   const handleLogout = async () => {
-    await logout();
-    setMobileOpen(false);
+    try {
+      await logout();
+      addToast({
+        type: 'success',
+        title: 'Logged out',
+        message: 'You have been successfully logged out',
+      });
+      setMobileOpen(false);
+    } catch (error: any) {
+      addToast({
+        type: 'error',
+        title: 'Logout failed',
+        message: error.message || 'Please try again',
+      });
+    }
   };
 
   return (
@@ -90,16 +106,7 @@ export default function Navbar() {
 
           <div className="hidden md:flex items-center gap-3">
             {user ? (
-              <>
-                <div className="flex items-center gap-2 px-3 py-2 rounded-full bg-white/5 border border-white/10">
-                  <User className="h-4 w-4 text-white/60" />
-                  <span className="text-sm text-white/80">{user.email}</span>
-                </div>
-                <Button variant="ghost" size="sm" onClick={handleLogout}>
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Logout
-                </Button>
-              </>
+              <AvatarDropdown />
             ) : (
               <>
                 <Button variant="ghost" size="sm" asChild>
