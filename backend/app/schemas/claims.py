@@ -53,6 +53,7 @@ class VerifyResponse(BaseModel):
     estimated_quantity: int | None = None
     limitations: str
     recommendation: str
+    blockchain_status: str | None = None
 
 
 # ── History ───────────────────────────────────────────────────
@@ -81,6 +82,15 @@ class ClaimDetailResponse(BaseModel):
     estimated_quantity: int | None = None
     limitations: str | None = None
     recommendation: str | None = None
+    # ── Blockchain proof ───────────────────────────────────────
+    blockchain_hash: str | None = None
+    transaction_hash: str | None = None
+    block_number: int | None = None
+    network: str | None = None
+    verification_anchor_time: str | None = None
+    blockchain_status: str | None = None
+    contract_address: str | None = None
+    explorer_url: str | None = None
 
 
 # ── Certificate ─────────────────────────────────────────────

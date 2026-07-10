@@ -36,6 +36,15 @@ class Settings(BaseSettings):
         "http://127.0.0.1:5173,http://127.0.0.1:3000"
     )
 
+    # ── Blockchain (Ethereum Sepolia) ─────────────────────────
+    # Optional — if unset, verification still succeeds and the
+    # blockchain anchor is recorded as "Pending" for later retry.
+    SEPOLIA_RPC_URL: str = ""
+    PRIVATE_KEY: str = ""
+    CONTRACT_ADDRESS: str = ""
+    BLOCKCHAIN_NETWORK: str = "Ethereum Sepolia"
+    ETHERSCAN_BASE_URL: str = "https://sepolia.etherscan.io"
+
     @property
     def cors_origin_list(self) -> list[str]:
         """Parse comma-separated CORS origins."""
