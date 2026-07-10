@@ -1,0 +1,55 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "VisionLedgerVerifier",
+  "sourceName": "contracts/VisionLedgerVerifier.sol",
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "verificationHash",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "verifier",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "VerificationStored",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "verificationHash",
+          "type": "bytes32"
+        }
+      ],
+      "name": "storeVerification",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x608060405234801561001057600080fd5b5060da8061001f6000396000f3fe6080604052348015600f57600080fd5b506004361060285760003560e01c806326dbe13214602d575b600080fd5b603c6038366004608c565b604e565b60405190815260200160405180910390f35b6040514280825290339083907fa085fb6ca241e90a150dff3a4e85a31e625480d6104906bcecfecc7a353373c89060200160405180910390a3919050565b600060208284031215609d57600080fd5b503591905056fea264697066735822122015b853718d08981c49ec6c5814fb42f69ee87f08c7aa6cc4b623bfcb6052fd8564736f6c63430008140033",
+  "deployedBytecode": "0x6080604052348015600f57600080fd5b506004361060285760003560e01c806326dbe13214602d575b600080fd5b603c6038366004608c565b604e565b60405190815260200160405180910390f35b6040514280825290339083907fa085fb6ca241e90a150dff3a4e85a31e625480d6104906bcecfecc7a353373c89060200160405180910390a3919050565b600060208284031215609d57600080fd5b503591905056fea264697066735822122015b853718d08981c49ec6c5814fb42f69ee87f08c7aa6cc4b623bfcb6052fd8564736f6c63430008140033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

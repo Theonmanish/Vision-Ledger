@@ -39,6 +39,29 @@ def normalize_claim_record(row: dict[str, Any]) -> dict[str, Any]:
     label = row.get("claim_type") or ""
     claim_type = LABEL_TO_CLAIM_TYPE.get(label, label)
 
+    # Blockchain proof — prefer typed columns (post-migration 001) and
+    # fall back to the same values persisted inside claim_input JSON so
+    # the data is correct whether or not the migration has run.
+    blockchain = claim_input.get("blockchain") if isinstance(claim_input.get("blockchain"), dict) else {}
+    transaction_hash = (
+        row.get("transaction_hash")
+        or row.get("tx_hash")
+        or blockchain.get("transaction_hash")
+    )
+    blockchain_hash = row.get("blockchain_hash") or blockchain.get("verification_hash")
+    block_number = row.get("block_number") or blockchain.get("block_number")
+    network = row.get("network") or blockchain.get("network")
+    anchor_time = (
+        row.get("verification_anchor_time")
+        or blockchain.get("anchor_time")
+        or blockchain.get("verification_anchor_time")
+    )
+    blockchain_status = (
+        row.get("blockchain_status")
+        or blockchain.get("status")
+        or ("Confirmed" if transaction_hash else "Pending")
+    )
+
     return {
         "id": row.get("id"),
         "claim_id": row.get("id"),
@@ -51,7 +74,20 @@ def normalize_claim_record(row: dict[str, Any]) -> dict[str, Any]:
         "reason": row.get("reason"),
         "image_url": (row.get("image_url") or "").rstrip("?"),
         "created_at": row.get("created_at"),
-        "tx_hash": row.get("tx_hash"),
+        "tx_hash": transaction_hash,
+        # ── User ownership (migration 002) ────────────────────────
+        "user_id": row.get("user_id"),
+        "created_by_email": row.get("created_by_email"),
+        # ── Blockchain proof (real on-chain values) ───────────────
+        "blockchain_hash": blockchain_hash,
+        "transaction_hash": transaction_hash,
+        "block_number": block_number,
+        "network": network,
+        "verification_anchor_time": anchor_time,
+        "blockchain_status": blockchain_status,
+        "contract_address": blockchain.get("contract_address"),
+        "explorer_url": blockchain.get("explorer_url"),
+        # ── AI assessment ──────────────────────────────────────────
         "claim_supported": claim_input.get("claim_supported"),
         "objects_detected": claim_input.get("objects_detected") if isinstance(claim_input.get("objects_detected"), list) else [],
         "estimated_quantity": claim_input.get("estimated_quantity"),
@@ -75,9 +111,29 @@ def build_claim_payload(
     estimated_quantity: int | None,
     limitations: str,
     recommendation: str,
+    blockchain: dict[str, Any] | None = None,
+    user_id: str | None = None,
+    user_email: str | None = None,
 ) -> dict[str, Any]:
-    """Build an insert payload compatible with the live Supabase schema."""
-    return {
+    """Build an insert payload compatible with the live Supabase schema.
+
+    The blockchain proof is written to *both* the typed columns (when
+    migration 001 is applied) and inside ``claim_input.blockchain`` so
+    it survives even before the migration runs.
+    """
+    blockchain = blockchain or {}
+    claim_input = {
+        "claim_code": claim_code,
+        "claim_supported": claim_supported,
+        "objects_detected": objects_detected,
+        "estimated_quantity": estimated_quantity,
+        "limitations": limitations,
+        "recommendation": recommendation,
+    }
+    if blockchain:
+        claim_input["blockchain"] = blockchain
+
+    payload: dict[str, Any] = {
         "claim_type": CLAIM_TYPE_TO_LABEL.get(claim_type, claim_type),
         "description": description,
         "image_url": image_url.rstrip("?"),
@@ -85,12 +141,24 @@ def build_claim_payload(
         "confidence": int(round(confidence * 100)),
         "reason": reason,
         "tx_hash": tx_hash,
-        "claim_input": {
-            "claim_code": claim_code,
-            "claim_supported": claim_supported,
-            "objects_detected": objects_detected,
-            "estimated_quantity": estimated_quantity,
-            "limitations": limitations,
-            "recommendation": recommendation,
-        },
+        "claim_input": claim_input,
     }
+
+    # Typed blockchain columns. These are no-ops until migration 001
+    # is applied; the insert path tolerates their absence (see
+    # SupabaseService._safe_insert).
+    if blockchain:
+        payload["blockchain_hash"] = blockchain.get("verification_hash")
+        payload["transaction_hash"] = blockchain.get("transaction_hash")
+        payload["block_number"] = blockchain.get("block_number")
+        payload["network"] = blockchain.get("network")
+        payload["verification_anchor_time"] = blockchain.get("anchor_time")
+        payload["blockchain_status"] = blockchain.get("status") or "Pending"
+
+    # User ownership (migration 002)
+    if user_id:
+        payload["user_id"] = user_id
+    if user_email:
+        payload["created_by_email"] = user_email
+
+    return payload

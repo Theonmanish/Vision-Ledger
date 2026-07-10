@@ -1,5 +1,6 @@
 import type { ClaimType, HistoryRecord, VerificationResult } from '../types';
 import { mapClaimToResult, mapHistoryRecord } from './mappers';
+import { supabase } from './supabase';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
 
@@ -25,8 +26,26 @@ async function parseError(response: Response): Promise<ApiError> {
   }
 }
 
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session?.access_token) {
+    return { Authorization: `Bearer ${session.access_token}` };
+  }
+  return {};
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, init);
+  const authHeaders = await getAuthHeaders();
+  const headers = {
+    ...authHeaders,
+    ...init?.headers,
+  };
+  
+  const response = await fetch(`${API_BASE}${path}`, {
+    ...init,
+    headers,
+  });
+  
   if (!response.ok) {
     throw await parseError(response);
   }
@@ -67,6 +86,15 @@ export interface BackendClaim {
   estimated_quantity?: number | null;
   limitations?: string;
   recommendation?: string;
+  // Blockchain proof (real on-chain values)
+  blockchain_hash?: string;
+  transaction_hash?: string;
+  block_number?: number | null;
+  network?: string;
+  verification_anchor_time?: string;
+  blockchain_status?: string;
+  contract_address?: string;
+  explorer_url?: string;
 }
 
 export async function checkHealth(): Promise<boolean> {
@@ -113,9 +141,14 @@ export async function fetchClaim(claimId: string): Promise<VerificationResult> {
 }
 
 export async function downloadCertificate(claimId: string): Promise<void> {
+  const authHeaders = await getAuthHeaders();
+  
   const response = await fetch(`${API_BASE}/certificate`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      ...authHeaders,
+    },
     body: JSON.stringify({ claim_id: claimId }),
   });
 

@@ -33,6 +33,24 @@ export function mapBackendStatus(
   return confidence >= 0.4 ? 'inconclusive' : 'failed';
 }
 
+const ETHERSCAN_BASE = 'https://sepolia.etherscan.io';
+
+/**
+ * Build the Etherscan transaction URL for a real on-chain tx hash.
+ * Returns an empty string if the hash is not a real 0x transaction.
+ */
+function buildExplorerUrl(
+  transactionHash: string | undefined,
+  fallbackExplorer?: string
+): string {
+  if (fallbackExplorer) return fallbackExplorer;
+  if (!transactionHash) return '';
+  if (/^0x[a-fA-F0-9]{64}$/.test(transactionHash)) {
+    return `${ETHERSCAN_BASE}/tx/${transactionHash}`;
+  }
+  return '';
+}
+
 export function placeholderTxHash(claimId: string): string {
   let hash = 0;
   const input = `visionledger:${claimId}`;
@@ -57,6 +75,18 @@ export function mapClaimToResult(claim: BackendClaim): VerificationResult {
   const createdAt = claim.created_at ?? new Date().toISOString();
   const claimId = claim.claim_id;
 
+  // Real on-chain transaction hash if anchored; otherwise a placeholder
+  // so the UI always has something to render.
+  const realTx = claim.transaction_hash ?? claim.tx_hash;
+  const isRealAnchor =
+    !!realTx && /^0x[a-fA-F0-9]{64}$/.test(realTx) && claim.blockchain_status === 'Confirmed';
+  const transactionHash = realTx && realTx.startsWith('0x')
+    ? realTx
+    : isRealAnchor
+      ? `0x${realTx}`
+      : placeholderTxHash(claimId);
+  const anchorTime = claim.verification_anchor_time ?? createdAt;
+
   return {
     id: claimId,
     claimType,
@@ -70,10 +100,17 @@ export function mapClaimToResult(claim: BackendClaim): VerificationResult {
     imageUrl: claim.image_url ?? '',
     createdAt,
     blockchain: {
-      transactionHash: claim.tx_hash ?? placeholderTxHash(claimId),
-      network: 'Ethereum Sepolia (placeholder)',
-      blockNumber: Math.abs(claimId.split('').reduce((a, c) => a + c.charCodeAt(0), 0)),
-      timestamp: createdAt,
+      transactionHash,
+      network: claim.network ?? 'Ethereum Sepolia',
+      blockNumber: claim.block_number ?? 0,
+      timestamp: anchorTime,
+      verificationHash: claim.blockchain_hash,
+      contractAddress: claim.contract_address,
+      explorerUrl: buildExplorerUrl(
+        transactionHash.startsWith('0x') ? transactionHash : undefined,
+        claim.explorer_url
+      ),
+      blockchainStatus: claim.blockchain_status,
     },
     certificate: {
       issuedAt: createdAt,
@@ -87,6 +124,11 @@ export function mapHistoryRecord(claim: BackendClaim): HistoryRecord {
     ? claim.claim_type
     : 'tree_plantation';
   const confidence = claim.confidence ?? 0;
+  const realTx = claim.transaction_hash ?? claim.tx_hash;
+  const transactionHash =
+    realTx && realTx.startsWith('0x')
+      ? realTx
+      : placeholderTxHash(claim.claim_id);
 
   return {
     id: claim.claim_id,
@@ -99,6 +141,7 @@ export function mapHistoryRecord(claim: BackendClaim): HistoryRecord {
     ),
     confidence,
     date: claim.created_at ?? new Date().toISOString(),
-    transactionHash: claim.tx_hash ?? placeholderTxHash(claim.claim_id),
+    transactionHash,
+    blockchainStatus: claim.blockchain_status,
   };
 }

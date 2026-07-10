@@ -1,8 +1,9 @@
 import { useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../../lib/utils';
-import { Upload, X, Image as ImageIcon } from 'lucide-react';
+import { Upload, X, Image as ImageIcon, RefreshCw } from 'lucide-react';
 import { ds } from '../../lib/design-tokens';
+import { Button } from '../ui/button';
 
 interface UploadCardProps {
   onFileSelect: (file: File | null) => void;
@@ -76,13 +77,15 @@ export default function UploadCard({ onFileSelect, previewUrl, className }: Uplo
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
     >
-      <div className="absolute inset-0 bg-noise opacity-10" />
+      <div className="absolute inset-0 bg-noise opacity-10" aria-hidden="true" />
       <input
         ref={inputRef}
         type="file"
         accept="image/*"
-        className="hidden"
+        capture="environment"
+        className="sr-only"
         onChange={handleChange}
+        aria-label="Upload evidence image"
       />
 
       <AnimatePresence mode="wait">
@@ -92,26 +95,32 @@ export default function UploadCard({ onFileSelect, previewUrl, className }: Uplo
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="relative group"
+            className="relative"
           >
             <img
               src={previewUrl}
-              alt="Preview"
-              className="relative z-10 h-64 w-full object-cover sm:h-80"
+              alt="Evidence preview"
+              className="relative z-10 max-h-[min(24rem,60vh)] w-full object-contain bg-black/20 sm:max-h-80"
+              decoding="async"
             />
-            <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-              <button
+            <div
+              className="absolute inset-0 z-20 flex items-end justify-center bg-gradient-to-t from-black/70 via-black/20 to-transparent p-4 opacity-100 sm:items-center sm:bg-black/60 sm:opacity-0 sm:transition-opacity sm:duration-300 sm:group-hover:opacity-100"
+            >
+              <Button
                 type="button"
+                variant="secondary"
+                size="sm"
                 onClick={() => inputRef.current?.click()}
-                className="rounded-full border border-white/[0.08] bg-white/10 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+                className="min-h-[44px] sm:rounded-full"
               >
+                <RefreshCw className="mr-1.5 h-4 w-4" aria-hidden="true" />
                 Change image
-              </button>
+              </Button>
             </div>
             <button
               type="button"
               onClick={handleRemove}
-              className="absolute right-3 top-3 z-30 flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.08] bg-black/60 text-white backdrop-blur-sm transition-all duration-200 hover:bg-black/80"
+              className="touch-target absolute right-3 top-3 z-30 flex items-center justify-center rounded-full border border-white/[0.08] bg-black/60 text-white backdrop-blur-sm transition-all duration-200 hover:bg-black/80"
               aria-label="Remove image"
             >
               <X className="h-4 w-4" />
@@ -125,7 +134,7 @@ export default function UploadCard({ onFileSelect, previewUrl, className }: Uplo
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => inputRef.current?.click()}
-            className="relative z-10 flex w-full cursor-pointer flex-col items-center justify-center gap-5 px-6 py-14 sm:py-20"
+            className="relative z-10 flex w-full min-h-[200px] cursor-pointer flex-col items-center justify-center gap-5 px-6 py-14 sm:min-h-0 sm:py-20"
           >
             <motion.div
               animate={{ scale: isDragOver ? 1.1 : 1 }}
@@ -137,16 +146,19 @@ export default function UploadCard({ onFileSelect, previewUrl, className }: Uplo
               )}
             >
               {isDragOver ? (
-                <Upload className="h-7 w-7" />
+                <Upload className="h-7 w-7" aria-hidden="true" />
               ) : (
-                <ImageIcon className="h-7 w-7" />
+                <ImageIcon className="h-7 w-7" aria-hidden="true" />
               )}
             </motion.div>
             <div className="space-y-1.5 text-center">
               <p className="text-base font-medium text-white">
                 {isDragOver ? 'Drop your image here' : 'Upload evidence image'}
               </p>
-              <p className="text-sm text-white/50">Drag & drop or click to browse</p>
+              <p className="text-sm text-white/50">
+                <span className="hidden sm:inline">Drag & drop or </span>
+                tap to browse
+              </p>
               <p className="mt-1 text-xs text-white/30">PNG, JPG, JPEG up to 10MB</p>
             </div>
           </motion.button>
