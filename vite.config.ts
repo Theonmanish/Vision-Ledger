@@ -112,4 +112,14 @@ export default defineConfig((): UserConfig => ({
     allowedHosts: true,
     hmr: false,
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'motion': ['motion/react'],
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+        },
+      },
+    },
+  },
 }))
