@@ -1,9 +1,10 @@
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../../lib/utils';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, LogOut, User } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useEffect, useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 
 const NAV_LINKS = [
   { path: '/', label: 'Home' },
@@ -14,6 +15,7 @@ const NAV_LINKS = [
 export default function Navbar() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user, logout } = useAuth();
 
   useEffect(() => {
     setMobileOpen(false);
@@ -25,6 +27,11 @@ export default function Navbar() {
       document.body.style.overflow = '';
     };
   }, [mobileOpen]);
+
+  const handleLogout = async () => {
+    await logout();
+    setMobileOpen(false);
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full safe-top">
@@ -81,10 +88,28 @@ export default function Navbar() {
             })}
           </nav>
 
-          <div className="hidden md:flex items-center">
-            <Button asChild size="default">
-              <Link to="/verify">Start Verification</Link>
-            </Button>
+          <div className="hidden md:flex items-center gap-3">
+            {user ? (
+              <>
+                <div className="flex items-center gap-2 px-3 py-2 rounded-full bg-white/5 border border-white/10">
+                  <User className="h-4 w-4 text-white/60" />
+                  <span className="text-sm text-white/80">{user.email}</span>
+                </div>
+                <Button variant="ghost" size="sm" onClick={handleLogout}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to="/login">Login</Link>
+                </Button>
+                <Button size="sm" asChild>
+                  <Link to="/signup">Sign Up</Link>
+                </Button>
+              </>
+            )}
           </div>
 
           <Button
@@ -133,14 +158,42 @@ export default function Navbar() {
                 </Link>
               ))}
 
-              <Button asChild className="mt-2 w-full min-h-[44px]">
-                <Link
-                  to="/verify"
-                  onClick={() => setMobileOpen(false)}
-                >
-                  Start Verification
-                </Link>
-              </Button>
+              {user ? (
+                <>
+                  <div className="flex items-center gap-2 px-4 py-3 mt-2 rounded-xl bg-white/5 border border-white/10">
+                    <User className="h-4 w-4 text-white/60" />
+                    <span className="text-sm text-white/80 truncate">{user.email}</span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    className="mt-2 w-full min-h-[44px]"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Logout
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button asChild className="mt-2 w-full min-h-[44px]">
+                    <Link to="/verify" onClick={() => setMobileOpen(false)}>
+                      Start Verification
+                    </Link>
+                  </Button>
+                  <div className="flex gap-2 mt-2">
+                    <Button variant="ghost" className="flex-1 min-h-[44px]" asChild>
+                      <Link to="/login" onClick={() => setMobileOpen(false)}>
+                        Login
+                      </Link>
+                    </Button>
+                    <Button className="flex-1 min-h-[44px]" asChild>
+                      <Link to="/signup" onClick={() => setMobileOpen(false)}>
+                        Sign Up
+                      </Link>
+                    </Button>
+                  </div>
+                </>
+              )}
             </nav>
           </motion.div>
         )}
