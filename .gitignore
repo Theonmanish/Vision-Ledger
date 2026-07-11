@@ -45,3 +45,5 @@ venv/
 *.njsproj
 *.sln
 *.sw?
+
+*.pdf
