@@ -199,3 +199,50 @@ export async function fetchBatches(): Promise<BatchListResponse> {
 export async function fetchBatch(batchId: string): Promise<BatchWithResults> {
   return request<BatchWithResults>(`/batches/${encodeURIComponent(batchId)}`);
 }
+
+// ── Notification API ────────────────────────────────────────
+
+import type {
+  Notification,
+  NotificationListResponse,
+  NotificationFilter,
+  UnreadCountResponse,
+  MarkReadResponse,
+} from '../types';
+
+export async function fetchNotifications(
+  limit: number = 30,
+  offset: number = 0,
+  type?: NotificationFilter
+): Promise<NotificationListResponse> {
+  const params = new URLSearchParams({
+    limit: limit.toString(),
+    offset: offset.toString(),
+  });
+  if (type && type !== 'all') {
+    params.append('type', type);
+  }
+  return request<NotificationListResponse>(`/notifications?${params.toString()}`);
+}
+
+export async function fetchUnreadCount(): Promise<UnreadCountResponse> {
+  return request<UnreadCountResponse>('/notifications/unread-count');
+}
+
+export async function markNotificationRead(notificationId: string): Promise<MarkReadResponse> {
+  return request<MarkReadResponse>(`/notifications/${encodeURIComponent(notificationId)}/read`, {
+    method: 'PATCH',
+  });
+}
+
+export async function markAllNotificationsRead(): Promise<MarkReadResponse> {
+  return request<MarkReadResponse>('/notifications/read-all', {
+    method: 'PATCH',
+  });
+}
+
+export async function clearReadNotifications(): Promise<MarkReadResponse> {
+  return request<MarkReadResponse>('/notifications/read', {
+    method: 'DELETE',
+  });
+}

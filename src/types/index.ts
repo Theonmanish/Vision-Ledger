@@ -132,3 +132,48 @@ export interface BatchListResponse {
   batches: Batch[];
   count: number;
 }
+// ── Notification Types ──────────────────────────────────────
+
+export type NotificationType =
+  | 'verification_started'
+  | 'verification_completed'
+  | 'verification_review'
+  | 'verification_failed'
+  | 'certificate_generated'
+  | 'blockchain_anchored'
+  | 'batch_completed';
+
+export type NotificationFilter =
+  | 'all'
+  | 'verification'
+  | 'certificates'
+  | 'blockchain'
+  | 'errors'
+  | 'bulk';
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  title: string;
+  message: string;
+  notification_type: NotificationType;
+  claim_id?: string;
+  batch_id?: string;
+  action_url?: string;
+  is_read: boolean;
+  created_at: string;
+}
+
+export interface NotificationListResponse {
+  notifications: Notification[];
+  count: number;
+  has_more: boolean;
+}
+
+export interface UnreadCountResponse {
+  count: number;
+}
+
+export interface MarkReadResponse {
+  success: boolean;
+}

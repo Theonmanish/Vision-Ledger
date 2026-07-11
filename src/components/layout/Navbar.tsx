@@ -1,11 +1,13 @@
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../../lib/utils';
-import { Menu, X, Home, FileCheck, History, Layers } from 'lucide-react';
+import { Menu, X, Home, FileCheck, History, Layers, Bell } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNotifications } from '../../contexts/NotificationContext';
 import AvatarDropdown from './AvatarDropdown';
+import NotificationCenter from '../notifications/NotificationCenter';
 
 const NAV_LINKS = [
   { path: '/', label: 'Home', icon: Home },
@@ -17,7 +19,9 @@ const NAV_LINKS = [
 export default function Navbar() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const { user } = useAuth();
+  const { unreadCount } = useNotifications();
 
   useEffect(() => {
     setMobileOpen(false);
@@ -97,7 +101,24 @@ export default function Navbar() {
 
           <div className="flex items-center gap-3">
             {user ? (
-              <AvatarDropdown />
+              <>
+                {/* Notification Bell - Desktop */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative hidden md:inline-flex touch-target"
+                  onClick={() => setNotificationsOpen(true)}
+                  aria-label="Open notifications"
+                >
+                  <Bell className="h-5 w-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
+                </Button>
+                <AvatarDropdown />
+              </>
             ) : (
               <>
                 <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex">
@@ -192,6 +213,27 @@ export default function Navbar() {
                         </Link>
                       );
                     })}
+
+                    {/* Notification Bell - Mobile */}
+                    {user && (
+                      <button
+                        onClick={() => {
+                          setMobileOpen(false);
+                          setNotificationsOpen(true);
+                        }}
+                        className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-white/60 transition-all duration-200 min-h-[48px] hover:bg-white/[0.05] hover:text-white"
+                      >
+                        <div className="relative">
+                          <Bell className="h-5 w-5" />
+                          {unreadCount > 0 && (
+                            <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
+                              {unreadCount > 9 ? '9+' : unreadCount}
+                            </span>
+                          )}
+                        </div>
+                        Notifications
+                      </button>
+                    )}
                   </div>
                 </nav>
 
@@ -217,6 +259,12 @@ export default function Navbar() {
           </>
         )}
       </AnimatePresence>
+
+      {/* Notification Center Drawer */}
+      <NotificationCenter
+        isOpen={notificationsOpen}
+        onClose={() => setNotificationsOpen(false)}
+      />
     </header>
   );
 }

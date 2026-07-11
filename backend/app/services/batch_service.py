@@ -6,6 +6,7 @@ Orchestrates the bulk verification workflow:
 2. Processes images one at a time
 3. Tracks progress and handles failures
 4. Updates batch statistics
+5. Creates notifications for batch events
 """
 
 import logging
@@ -15,6 +16,7 @@ from typing import Any
 from app.services.claim_service import ClaimService
 from app.services.storage_service import StorageService
 from app.services.supabase_service import SupabaseService
+from app.services.notification_service import NotificationService
 
 logger = logging.getLogger(__name__)
 
@@ -32,10 +34,12 @@ class BatchService:
         db: SupabaseService | None = None,
         claim_service: ClaimService | None = None,
         storage_service: StorageService | None = None,
+        notification_service: NotificationService | None = None,
     ) -> None:
         self._db: SupabaseService = db or SupabaseService()
         self._claim_service: ClaimService = claim_service or ClaimService()
         self._storage: StorageService = storage_service or StorageService()
+        self._notifications: NotificationService = notification_service or NotificationService()
 
     def create_batch_from_urls(
         self,
@@ -125,6 +129,18 @@ class BatchService:
             average_confidence=avg_confidence,
             status=batch_status,
         )
+
+        # Create batch completion notification (non-blocking, best-effort)
+        try:
+            self._notifications.notify_batch_completed(
+                user_id=user_id,
+                batch_id=batch_id,
+                project_name=project_name or "Unnamed Batch",
+                completed=completed,
+                total=len(images),
+            )
+        except Exception as e:
+            logger.warning(f"Failed to create batch notification: {e}")
 
         return {
             "batch_id": batch_id,

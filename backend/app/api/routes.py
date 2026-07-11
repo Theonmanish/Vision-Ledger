@@ -26,10 +26,17 @@ from app.schemas.claims import (
     BatchResponse,
     BatchListResponse,
 )
+from app.schemas.notifications import (
+    NotificationResponse,
+    NotificationListResponse,
+    UnreadCountResponse,
+    MarkReadResponse,
+)
 from app.services.storage_service import StorageService
 from app.services.claim_service import ClaimService
 from app.services.certificate_service import CertificateService
 from app.services.batch_service import BatchService
+from app.services.notification_service import NotificationService
 from app.core.errors import not_found
 from app.core.auth import get_current_user
 
@@ -62,11 +69,17 @@ def _batch_service() -> BatchService:
     return BatchService()
 
 
+def _notification_service() -> NotificationService:
+    """Yield a fresh NotificationService per request."""
+    return NotificationService()
+
+
 # Type aliases for cleaner injection signatures.
 StorageDep = Annotated[StorageService, Depends(_storage_service)]
 ClaimDep = Annotated[ClaimService, Depends(_claim_service)]
 CertificateDep = Annotated[CertificateService, Depends(_certificate_service)]
 BatchDep = Annotated[BatchService, Depends(_batch_service)]
+NotificationDep = Annotated[NotificationService, Depends(_notification_service)]
 
 
 # -- GET / --
@@ -376,3 +389,138 @@ async def get_batch(
         raise not_found("Batch")
 
     return BatchResponse(**batch)
+
+
+# -- Notification Endpoints --
+
+# -- GET /notifications --
+
+@router.get(
+    "/notifications",
+    response_model=NotificationListResponse,
+    summary="List notifications",
+    description="Return notifications for the authenticated user with optional filtering.",
+    responses={
+        401: {"description": "Not authenticated"},
+    },
+)
+@limiter.limit("60/minute")
+async def list_notifications(
+    request: Request,
+    notification_service: NotificationDep,
+    current_user: dict = Depends(get_current_user),
+    limit: int = 30,
+    offset: int = 0,
+    type: str | None = None,
+) -> NotificationListResponse:
+    notifications = notification_service.get_notifications(
+        user_id=current_user["id"],
+        limit=limit,
+        offset=offset,
+        notification_type=type,
+    )
+    # Check if there are more notifications
+    all_notifications = notification_service.get_notifications(
+        user_id=current_user["id"],
+        limit=limit + 1,
+        offset=offset,
+        notification_type=type,
+    )
+    has_more = len(all_notifications) > limit
+
+    return NotificationListResponse(
+        notifications=[NotificationResponse(**n) for n in notifications],
+        count=len(notifications),
+        has_more=has_more,
+    )
+
+
+# -- GET /notifications/unread-count --
+
+@router.get(
+    "/notifications/unread-count",
+    response_model=UnreadCountResponse,
+    summary="Get unread notification count",
+    description="Return the count of unread notifications for the authenticated user.",
+    responses={
+        401: {"description": "Not authenticated"},
+    },
+)
+@limiter.limit("60/minute")
+async def get_unread_count(
+    request: Request,
+    notification_service: NotificationDep,
+    current_user: dict = Depends(get_current_user),
+) -> UnreadCountResponse:
+    count = notification_service.get_unread_count(user_id=current_user["id"])
+    return UnreadCountResponse(count=count)
+
+
+# -- PATCH /notifications/{notification_id}/read --
+
+@router.patch(
+    "/notifications/{notification_id}/read",
+    response_model=MarkReadResponse,
+    summary="Mark notification as read",
+    description="Mark a single notification as read.",
+    responses={
+        401: {"description": "Not authenticated"},
+        404: {"description": "Notification not found"},
+    },
+)
+@limiter.limit("60/minute")
+async def mark_notification_read(
+    request: Request,
+    notification_id: str,
+    notification_service: NotificationDep,
+    current_user: dict = Depends(get_current_user),
+) -> MarkReadResponse:
+    success = notification_service.mark_as_read(
+        notification_id=notification_id,
+        user_id=current_user["id"],
+    )
+    if not success:
+        raise not_found("Notification")
+    return MarkReadResponse(success=True)
+
+
+# -- PATCH /notifications/read-all --
+
+@router.patch(
+    "/notifications/read-all",
+    response_model=MarkReadResponse,
+    summary="Mark all notifications as read",
+    description="Mark all notifications as read for the authenticated user.",
+    responses={
+        401: {"description": "Not authenticated"},
+    },
+)
+@limiter.limit("30/minute")
+async def mark_all_read(
+    request: Request,
+    notification_service: NotificationDep,
+    current_user: dict = Depends(get_current_user),
+) -> MarkReadResponse:
+    notification_service.mark_all_as_read(user_id=current_user["id"])
+    return MarkReadResponse(success=True)
+
+
+# -- DELETE /notifications/read --
+
+@router.delete(
+    "/notifications/read",
+    response_model=MarkReadResponse,
+    summary="Clear read notifications",
+    description="Delete all read notifications for the authenticated user.",
+    responses={
+        401: {"description": "Not authenticated"},
+    },
+)
+@limiter.limit("30/minute")
+async def clear_read_notifications(
+    request: Request,
+    notification_service: NotificationDep,
+    current_user: dict = Depends(get_current_user),
+) -> MarkReadResponse:
+    notification_service.clear_read_notifications(user_id=current_user["id"])
+    return MarkReadResponse(success=True)

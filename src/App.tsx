@@ -7,6 +7,7 @@ import GlobalBackground from './components/layout/GlobalBackground';
 import OfflineBanner from './components/layout/OfflineBanner';
 import InstallPrompt from './components/layout/InstallPrompt';
 import { AuthProvider } from './contexts/AuthContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ToastProvider } from './components/ui/toast';
 
@@ -35,63 +36,65 @@ function LoadingScreen() {
 function App() {
   return (
     <AuthProvider>
-      <ToastProvider>
-        <BrowserRouter>
-          <div className="relative min-h-screen bg-[#0a0a0a]">
-            <GlobalBackground />
-            <OfflineBanner />
-            <Navbar />
+      <NotificationProvider>
+        <ToastProvider>
+          <BrowserRouter>
+            <div className="relative min-h-screen bg-[#0a0a0a]">
+              <GlobalBackground />
+              <OfflineBanner />
+              <Navbar />
 
-            <main className="relative z-10">
-              <Suspense fallback={<LoadingScreen />}>
-                <Routes>
-                  <Route path="/" element={<Landing />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/signup" element={<Signup />} />
-                  <Route path="/forgot-password" element={<ForgotPassword />} />
-                  <Route path="/reset-password" element={<ResetPassword />} />
-                  <Route path="/verify-email" element={<EmailVerification />} />
-                  <Route
-                    path="/verify"
-                    element={
-                      <ProtectedRoute>
-                        <Verify />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/bulk-verify"
-                    element={
-                      <ProtectedRoute>
-                        <BulkVerify />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/results/:id"
-                    element={
-                      <ProtectedRoute>
-                        <Results />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/history"
-                    element={
-                      <ProtectedRoute>
-                        <History />
-                      </ProtectedRoute>
-                    }
-                  />
-                </Routes>
-              </Suspense>
-            </main>
+              <main className="relative z-10">
+                <Suspense fallback={<LoadingScreen />}>
+                  <Routes>
+                    <Route path="/" element={<Landing />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/signup" element={<Signup />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
+                    <Route path="/verify-email" element={<EmailVerification />} />
+                    <Route
+                      path="/verify"
+                      element={
+                        <ProtectedRoute>
+                          <Verify />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/bulk-verify"
+                      element={
+                        <ProtectedRoute>
+                          <BulkVerify />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/results/:id"
+                      element={
+                        <ProtectedRoute>
+                          <Results />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/history"
+                      element={
+                        <ProtectedRoute>
+                          <History />
+                        </ProtectedRoute>
+                      }
+                    />
+                  </Routes>
+                </Suspense>
+              </main>
 
-            <Footer />
-            <InstallPrompt />
-          </div>
-        </BrowserRouter>
-      </ToastProvider>
+              <Footer />
+              <InstallPrompt />
+            </div>
+          </BrowserRouter>
+        </ToastProvider>
+      </NotificationProvider>
     </AuthProvider>
   );
 }

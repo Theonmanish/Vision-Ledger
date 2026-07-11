@@ -7,6 +7,7 @@ Responsibilities:
   * Anchor verification proof on-chain (best-effort).
   * Persist claim metadata to Supabase.
   * Retrieve full claim history.
+  * Create notifications for verification events.
 """
 
 import logging
@@ -19,6 +20,7 @@ from app.services.blockchain_service import (
     generate_verification_hash,
 )
 from app.services.supabase_service import SupabaseService
+from app.services.notification_service import NotificationService
 from app.utils.helpers import generate_claim_id, placeholder_tx_hash
 from app.utils.claim_mapper import build_claim_payload, normalize_claim_record
 
@@ -37,10 +39,12 @@ class ClaimService:
         db: SupabaseService | None = None,
         ai: AIService | None = None,
         blockchain: BlockchainService | None = None,
+        notifications: NotificationService | None = None,
     ) -> None:
         self._db: SupabaseService = db or SupabaseService()
         self._ai: AIService = ai or AIService()
         self._blockchain: BlockchainService = blockchain or BlockchainService()
+        self._notifications: NotificationService = notifications or NotificationService()
 
     def verify(
         self,
@@ -169,8 +173,39 @@ class ClaimService:
         if saved:
             normalized = normalize_claim_record(saved)
             result["claimId"] = normalized["claim_id"]
+
+            # Create notifications (non-blocking, best-effort)
+            if user_id:
+                try:
+                    # Notification: Verification completed
+                    self._notifications.notify_verification_completed(
+                        user_id=user_id,
+                        claim_id=normalized["claim_id"],
+                        claim_type=claim_type,
+                        status=status,
+                    )
+
+                    # Notification: Blockchain anchored (if confirmed)
+                    if anchor.status == "Confirmed":
+                        self._notifications.notify_blockchain_anchored(
+                            user_id=user_id,
+                            claim_id=normalized["claim_id"],
+                            network=anchor.network or "Ethereum Sepolia",
+                        )
+                except Exception as e:
+                    logger.warning(f"Failed to create notifications: {e}")
         else:
             logger.warning("Claim %s verified but could not be persisted", claim_code)
+            # Create failure notification
+            if user_id:
+                try:
+                    self._notifications.notify_verification_failed(
+                        user_id=user_id,
+                        claim_id=claim_code,
+                        claim_type=claim_type,
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to create failure notification: {e}")
 
         return result
 
