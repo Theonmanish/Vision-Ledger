@@ -71,6 +71,10 @@ I_PERSON = "\u25CB"
 I_ANCHOR = "\u2693"
 I_PEN = "\u270E"
 
+# ── Progress Bar Characters ────────────────────────────────────
+BAR_FILLED = "\u2588"  # █
+BAR_EMPTY = "\u2591"   # ░
+
 
 class CertificateService:
     """Builds premium single-page A4 PDF verification certificates."""
@@ -341,10 +345,12 @@ class CertificateService:
         pct = int(confidence * 100)
         filled = max(1, int(pct / 5))
         empty = 20 - filled
+        filled_bar = BAR_FILLED * filled
+        empty_bar = BAR_EMPTY * empty
         bar = (
             f'<font name="Helvetica-Bold" size="6.8" color="{C_NAVY.hexval()}">{pct:.1f}%</font>  '
-            f'<font color="{C_GREEN.hexval()}" size="6.5">{"\u2588" * filled}</font>'
-            f'<font color="{C_GRAY.hexval()}" size="6.5">{"\u2591" * empty}</font>')
+            f'<font color="{C_GREEN.hexval()}" size="6.5">{filled_bar}</font>'
+            f'<font color="{C_GRAY.hexval()}" size="6.5">{empty_bar}</font>')
         return Paragraph(bar, ParagraphStyle("CB", parent=ParagraphStyle("t"), fontSize=6.8, leading=9))
 
     def _explorer_link(self, url):
