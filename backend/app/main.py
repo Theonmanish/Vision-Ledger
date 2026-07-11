@@ -25,24 +25,26 @@ from app.api.routes import router
 logger = logging.getLogger(__name__)
 
 
-# -- Lifespan -- one-time startup / shutdown hooks --
+# -------------------------------------------------------------------
+# Lifespan
+# -------------------------------------------------------------------
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     """
     Runs once when Uvicorn starts and once when it stops.
-
-    Use this hook to initialise heavyweight resources (connection
-    pools, ML model warm-up, etc.) and tear them down cleanly.
     """
-    # -- Startup --
+
     logger.info("%s starting up", settings.APP_NAME)
+
     yield
-    # -- Shutdown --
+
     logger.info("%s shutting down", settings.APP_NAME)
 
 
-# -- Application instance --
+# -------------------------------------------------------------------
+# FastAPI App
+# -------------------------------------------------------------------
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -52,77 +54,89 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# Attach rate limiter to app state
+# -------------------------------------------------------------------
+# Rate Limiter
+# -------------------------------------------------------------------
+
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_exception_handler(
+    RateLimitExceeded,
+    _rate_limit_exceeded_handler,
+)
 
-
-# -- CORS -- configured for localhost frontend --
-# Restricted to specific methods and headers required by the frontend.
+# -------------------------------------------------------------------
+# CORS
+# -------------------------------------------------------------------
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,
     allow_credentials=True,
     allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type"],
+    allow_headers=["*"],
 )
 
-
-# -- Security headers middleware --
+# -------------------------------------------------------------------
+# Security Headers
+# -------------------------------------------------------------------
 
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next):
-    """Add production-grade security headers to every response."""
+    """
+    Adds common security headers to every response.
+    """
+
     response = await call_next(request)
 
-    # Prevent MIME type sniffing
     response.headers["X-Content-Type-Options"] = "nosniff"
 
-    # Prevent clickjacking
     response.headers["X-Frame-Options"] = "DENY"
 
-    # Control referrer information
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
 
-    # Content Security Policy — restrict resource loading
     response.headers["Content-Security-Policy"] = (
         "default-src 'none'; "
         "frame-ancestors 'none'"
     )
 
-    # HTTP Strict Transport Security (HSTS)
     response.headers["Strict-Transport-Security"] = (
         "max-age=31536000; includeSubDomains"
     )
 
-    # Restrict browser features
     response.headers["Permissions-Policy"] = (
         "camera=(), microphone=(), geolocation=()"
     )
 
-    # Prevent caching of sensitive API responses
-    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+    response.headers["Cache-Control"] = (
+        "no-store, no-cache, must-revalidate"
+    )
+
     response.headers["Pragma"] = "no-cache"
 
-    # Remove server header to avoid leaking tech stack
-    response.headers.pop("server", None)
+    # Safely remove identifying headers
+    for header in ("server", "x-powered-by"):
+        if header in response.headers:
+            del response.headers[header]
 
     return response
 
 
-# -- Audit logging middleware --
+# -------------------------------------------------------------------
+# Audit Logging
+# -------------------------------------------------------------------
 
 @app.middleware("http")
 async def audit_log_requests(request: Request, call_next):
-    """Log failed requests and track request timing for security auditing."""
+    """
+    Log failed requests and request timing.
+    """
+
     start_time = time.time()
 
     response = await call_next(request)
 
     duration_ms = int((time.time() - start_time) * 1000)
 
-    # Log failed requests (4xx and 5xx)
     if response.status_code >= 400:
         logger.warning(
             "security_event=failed_request "
@@ -137,7 +151,9 @@ async def audit_log_requests(request: Request, call_next):
     return response
 
 
-# -- Global exception handler --
+# -------------------------------------------------------------------
+# Global Exception Handler
+# -------------------------------------------------------------------
 
 @app.exception_handler(AppException)
 async def _handle_app_exception(
@@ -145,29 +161,36 @@ async def _handle_app_exception(
     exc: AppException,
 ) -> JSONResponse:
     """
-    Convert ``AppException`` into the structured JSON body
-    defined in ``core/errors.py``.
+    Convert AppException into JSON response.
     """
+
     logger.warning(
         "security_event=app_exception "
         "method=%s path=%s status=%d detail=%s",
         request.method,
         request.url.path,
         exc.status_code,
-        exc.detail.get("error", {}).get("message", "unknown") if isinstance(exc.detail, dict) else str(exc.detail),
+        exc.detail.get("error", {}).get("message", "unknown")
+        if isinstance(exc.detail, dict)
+        else str(exc.detail),
     )
+
     return JSONResponse(
         status_code=exc.status_code,
         content=exc.detail,
     )
 
 
-# -- Include routers --
+# -------------------------------------------------------------------
+# Routes
+# -------------------------------------------------------------------
 
 app.include_router(router)
 
 
-# -- Run directly with: python -m app.main --
+# -------------------------------------------------------------------
+# Local Development
+# -------------------------------------------------------------------
 
 if __name__ == "__main__":
     import uvicorn
