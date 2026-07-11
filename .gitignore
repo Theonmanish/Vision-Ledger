@@ -47,3 +47,6 @@ venv/
 *.sw?
 
 *.pdf
+
+__pycache__/
+*.py[cod]

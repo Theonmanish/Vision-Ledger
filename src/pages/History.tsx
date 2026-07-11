@@ -19,6 +19,7 @@ import {
 import StatusBadge from '../components/shared/StatusBadge';
 import EmptyState from '../components/shared/EmptyState';
 import LoadingScreen from '../components/shared/LoadingScreen';
+import VerificationDashboard from '../components/analytics/VerificationDashboard';
 import { CLAIM_TYPE_LABELS, type HistoryRecord } from '../types';
 import { formatDate, truncateHash, cn } from '../lib/utils';
 import { fetchHistory, ApiError } from '../lib/api';
@@ -146,6 +147,9 @@ export default function HistoryPage() {
           />
         ) : (
           <>
+            {/* Verification Analytics Dashboard */}
+            <VerificationDashboard records={records} />
+
             <div className="mb-6">
               <div className="relative w-full max-w-sm">
                 <Search
