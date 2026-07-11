@@ -12,14 +12,16 @@ import { Textarea } from '../components/ui/textarea';
 import { Progress } from '../components/ui/progress';
 import { ds } from '../lib/design-tokens';
 import type { ClaimType } from '../types';
-import { CLAIM_TYPE_LABELS } from '../types';
+import { CLAIM_TYPE_LABELS, CLAIM_TYPE_ICONS } from '../types';
 import { uploadImage, verifyClaim, ApiError } from '../lib/api';
 import { ArrowRight, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 
-const CLAIM_TYPE_OPTIONS = Object.entries(CLAIM_TYPE_LABELS).map(([value, label]) => ({
-  value,
-  label,
-}));
+const CLAIM_TYPE_OPTIONS = (Object.entries(CLAIM_TYPE_LABELS) as [ClaimType, string][]).map(
+  ([value, label]) => ({
+    value,
+    label: `${CLAIM_TYPE_ICONS[value]} ${label}`,
+  })
+);
 
 const PROGRESS_STEPS = [
   { at: 15, message: 'Uploading evidence...' },

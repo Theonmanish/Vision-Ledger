@@ -1,0 +1,52 @@
+{
+  "address": "0x294B0Dd4cEff818BB0159eA1a0C9E6E9158b841b",
+  "deploymentTxHash": "0x9b380f7b4bb3f659e601b28879ec7c44872eeaf7c7750a2b44545e2e92e7523c",
+  "deployer": "0x7AC62d6702Cb241e8C2737a2740953A24B855827",
+  "chainId": "11155111",
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "verificationHash",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "verifier",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "VerificationStored",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "verificationHash",
+          "type": "bytes32"
+        }
+      ],
+      "name": "storeVerification",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ]
+}

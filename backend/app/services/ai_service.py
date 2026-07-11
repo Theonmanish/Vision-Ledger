@@ -22,38 +22,41 @@ logger = logging.getLogger(__name__)
 
 # ── Prompt engineering ────────────────────────────────────────────────
 
-SYSTEM_PROMPT = """\
-You are an expert insurance-claims analyst.  Given an image and a claim \
-description, assess whether the visual evidence supports the claim.
+SYSTEM_PROMPT = """You are a JSON API. Return ONLY valid JSON. Never explain. Never use markdown. Never output reasoning. Never output thoughts. Never output analysis. Never output numbered lists. Never output text outside JSON.
 
-You MUST respond with a single JSON object — no markdown fences, no \
-extra commentary — matching this exact schema:
+Return a single JSON object matching this schema:
 
 {
-  "claim_supported": true | false,
-  "confidence": 0.0 — 1.0,
-  "objects_detected": ["object1", "object2", ...],
-  "estimated_quantity": <integer or null if not applicable>,
-  "reason": "concise explanation of your assessment",
-  "limitations": "caveats about what cannot be determined from the image",
-  "recommendation": "next-step advice for the claims adjuster"
+  "claim_supported": boolean,
+  "confidence": number (0.0-1.0),
+  "vision_confidence": integer (0-100),
+  "claim_match_confidence": integer (0-100),
+  "verification_confidence": integer (0-100),
+  "objects_detected": array of objects with "label" (string) and "confidence" (integer 0-100),
+  "estimated_quantity": integer or null,
+  "reason": string,
+  "limitations": string,
+  "recommendation": string
 }
 
-Rules:
-- Set confidence between 0 and 1 based on how strongly the image supports the claim.
-- List every relevant object you can identify in the image.
-- Use null for estimated_quantity when it does not apply to the claim type.
-- Be factual and conservative — highlight uncertainty in limitations.
-"""
+Confidence scoring:
+- vision_confidence: Image quality and object detection certainty (0-100)
+- claim_match_confidence: How well the image supports the claim type (0-100)
+- verification_confidence: Final verification score combining all factors (0-100)
 
-USER_PROMPT_TEMPLATE = """\
-Claim type: {claim_type}
+Status mapping:
+- 90-100: Verified (claim_supported: true)
+- 75-89: Likely Verified (claim_supported: true)
+- 50-74: Needs Review (claim_supported: false)
+- 25-49: Inconclusive (claim_supported: false)
+- 0-24: Rejected (claim_supported: false)
 
+Return ONLY the JSON object. No other text."""
+
+USER_PROMPT_TEMPLATE = """Claim type: {claim_type}
 Description: {description}
 
-Analyze the attached image in the context of the claim above and return \
-your assessment as a JSON object.
-"""
+Analyze the image and return JSON."""
 
 
 # ── Service ───────────────────────────────────────────────────────────
@@ -112,7 +115,7 @@ class AIService:
                     },
                 ],
                 max_tokens=1024,
-                temperature=0.2,
+                temperature=0,
             )
         except (APIConnectionError, RateLimitError, APIError) as exc:
             logger.exception("Fireworks API call failed")
@@ -122,7 +125,7 @@ class AIService:
 
         # ── Extract and parse the response text ────────────────
         raw_text = response.choices[0].message.content or ""
-        cleaned = _strip_json_fences(raw_text)
+        cleaned = _extract_json(raw_text)
 
         try:
             parsed = json.loads(cleaned)
@@ -145,14 +148,31 @@ class AIService:
 
 # ── Helpers ────────────────────────────────────────────────────────────
 
-def _strip_json_fences(text: str) -> str:
-    """Remove ```json ... ``` fences that some models wrap around JSON."""
-    stripped = text.strip()
-    if stripped.startswith("```"):
-        first_newline = stripped.find("\n")
-        if first_newline != -1:
-            stripped = stripped[first_newline + 1 :]
-        if stripped.endswith("```"):
-            stripped = stripped[:-3]
-        return stripped.strip()
-    return stripped
+def _extract_json(text: str) -> str:
+    """Extract JSON from response, handling markdown fences and reasoning text."""
+    text = text.strip()
+    
+    # If it starts with {, assume it's already JSON
+    if text.startswith("{"):
+        return text
+    
+    # Look for JSON object in the text
+    # Find the first { and last }
+    start_idx = text.find("{")
+    end_idx = text.rfind("}")
+    
+    if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
+        return text[start_idx:end_idx + 1]
+    
+    # Fallback: try to strip markdown fences
+    if text.startswith("```"):
+        lines = text.split("\n")
+        # Remove first line (```json or ```)
+        if lines:
+            lines = lines[1:]
+        # Remove last line if it's ```
+        if lines and lines[-1].strip() == "```":
+            lines = lines[:-1]
+        return "\n".join(lines).strip()
+    
+    return text

@@ -10,7 +10,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
       <textarea
         className={cn(
           ds.input,
-          'min-h-[120px] resize-none py-3 disabled:cursor-not-allowed disabled:opacity-50',
+          'min-h-[120px] resize-none py-3 text-base sm:text-sm disabled:cursor-not-allowed disabled:opacity-50',
           className
         )}
         ref={ref}

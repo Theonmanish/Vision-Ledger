@@ -206,13 +206,13 @@ export default function Results() {
             Back to history
           </Link>
 
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <div className="mb-2 flex items-center gap-3">
-                <h1 className={ds.heading1}>Verification Report</h1>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <div className="mb-2 flex flex-wrap items-center gap-2 sm:gap-3">
+                <h1 className={cn(ds.heading1, 'text-2xl sm:text-3xl md:text-4xl')}>Verification Report</h1>
                 <StatusBadge status={result.status} />
               </div>
-              <p className="text-white/50">
+              <p className="text-sm text-white/50 sm:text-base">
                 {CLAIM_TYPE_LABELS[result.claimType]} &middot;{' '}
                 {formatDateTime(result.createdAt)}
               </p>
@@ -220,7 +220,7 @@ export default function Results() {
           </div>
         </motion.div>
 
-        <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           <DashboardCard icon={Shield} label="Status" value={statusInfo.title.split(' ')[0]} />
           <DashboardCard icon={Brain} label="Confidence" value={formatConfidence(result.confidenceScore)} />
           <DashboardCard icon={Hash} label="Block" value={`#${result.blockchain.blockNumber.toLocaleString()}`} />
@@ -241,6 +241,8 @@ export default function Results() {
                       src={result.imageUrl}
                       alt="Evidence"
                       className="h-full w-full object-cover"
+                      loading="lazy"
+                      decoding="async"
                     />
                   ) : (
                     <div className="flex h-full items-center justify-center text-white/40">
@@ -282,6 +284,21 @@ export default function Results() {
             </ResultCard>
 
             <ResultCard icon={Hash} title="Blockchain Record">
+              <div className="mb-4 flex items-center gap-2">
+                {result.blockchain.blockchainStatus === 'Confirmed' ? (
+                  <Badge variant="default" className="bg-[#22C55E]/15 text-[#22C55E]">
+                    <CheckCircle2 className="mr-1 h-3 w-3" />
+                    Blockchain Verified
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary">
+                    <Clock className="mr-1 h-3 w-3" />
+                    Anchor Pending
+                  </Badge>
+                )}
+                <span className="text-xs text-white/50">{result.blockchain.network}</span>
+              </div>
+
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1">
                   <p className="text-xs text-white/40">Transaction Hash</p>
@@ -300,20 +317,47 @@ export default function Results() {
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs text-white/40">Timestamp</p>
+                  <p className="text-xs text-white/40">Verification Timestamp</p>
                   <p className="text-sm text-white/80">
                     {formatDateTime(result.blockchain.timestamp)}
+                  </p>
+                </div>
+                <div className="space-y-1 sm:col-span-2">
+                  <p className="text-xs text-white/40">Verification Hash</p>
+                  <p className="break-all font-mono text-xs text-white/70">
+                    {result.blockchain.verificationHash ?? '—'}
+                  </p>
+                </div>
+                <div className="space-y-1 sm:col-span-2">
+                  <p className="text-xs text-white/40">Contract Address</p>
+                  <p className="font-mono text-xs text-white/70">
+                    {result.blockchain.contractAddress ?? '—'}
                   </p>
                 </div>
               </div>
 
               <div className="mt-4 border-t border-white/[0.08] pt-4">
-                <Button variant="secondary" size="sm" disabled>
-                  <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
-                  View on Explorer
-                </Button>
+                {result.blockchain.explorerUrl ? (
+                  <Button variant="secondary" size="sm" asChild>
+                    <a
+                      href={result.blockchain.explorerUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
+                      View on Etherscan
+                    </a>
+                  </Button>
+                ) : (
+                  <Button variant="secondary" size="sm" disabled>
+                    <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
+                    View on Explorer
+                  </Button>
+                )}
                 <p className="mt-2 text-xs text-white/40">
-                  Blockchain integration pending — hash shown is a deterministic placeholder.
+                  {result.blockchain.blockchainStatus === 'Confirmed'
+                    ? 'Verification hash cryptographically anchored on Ethereum Sepolia.'
+                    : 'Blockchain anchor pending — this verification will be retry-anchored.'}
                 </p>
               </div>
             </ResultCard>
@@ -342,37 +386,116 @@ export default function Results() {
                 <div className={ds.iconBox}>
                   <Shield className="h-4 w-4" />
                 </div>
-                <p className="font-semibold text-white">Confidence Score</p>
+                <p className="font-semibold text-white">Confidence Scores</p>
               </div>
 
-              <div className="flex justify-center py-2">
-                <div className="relative flex h-32 w-32 items-center justify-center">
-                  <svg className="absolute inset-0 h-full w-full -rotate-90">
-                    <circle
-                      cx="64"
-                      cy="64"
-                      r="54"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="6"
-                      className="text-white/[0.06]"
-                    />
-                    <circle
-                      cx="64"
-                      cy="64"
-                      r="54"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="6"
-                      strokeDasharray={`${2 * Math.PI * 54}`}
-                      strokeDashoffset={`${2 * Math.PI * 54 * (1 - result.confidenceScore)}`}
-                      className="text-[#2563EB] transition-all duration-1000 ease-out"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <span className="text-3xl font-bold text-white">
-                    {formatConfidence(result.confidenceScore)}
-                  </span>
+              <div className="space-y-6 py-2">
+                {/* Vision Confidence */}
+                <div className="flex items-center gap-4">
+                  <div className="relative flex h-20 w-20 items-center justify-center flex-shrink-0">
+                    <svg className="absolute inset-0 h-full w-full -rotate-90">
+                      <circle
+                        cx="40"
+                        cy="40"
+                        r="34"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="5"
+                        className="text-white/[0.06]"
+                      />
+                      <circle
+                        cx="40"
+                        cy="40"
+                        r="34"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="5"
+                        strokeDasharray={`${2 * Math.PI * 34}`}
+                        strokeDashoffset={`${2 * Math.PI * 34 * (1 - result.visionConfidence / 100)}`}
+                        className="text-[#2563EB] transition-all duration-1000 ease-out"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <span className="text-xl font-bold text-white">
+                      {result.visionConfidence}%
+                    </span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-white">👁 Vision Confidence</p>
+                    <p className="text-xs text-white/50 mt-1">Image quality & object detection</p>
+                  </div>
+                </div>
+
+                {/* Claim Match Confidence */}
+                <div className="flex items-center gap-4">
+                  <div className="relative flex h-20 w-20 items-center justify-center flex-shrink-0">
+                    <svg className="absolute inset-0 h-full w-full -rotate-90">
+                      <circle
+                        cx="40"
+                        cy="40"
+                        r="34"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="5"
+                        className="text-white/[0.06]"
+                      />
+                      <circle
+                        cx="40"
+                        cy="40"
+                        r="34"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="5"
+                        strokeDasharray={`${2 * Math.PI * 34}`}
+                        strokeDashoffset={`${2 * Math.PI * 34 * (1 - result.claimMatchConfidence / 100)}`}
+                        className="text-[#F59E0B] transition-all duration-1000 ease-out"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <span className="text-xl font-bold text-white">
+                      {result.claimMatchConfidence}%
+                    </span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-white">🎯 Claim Match</p>
+                    <p className="text-xs text-white/50 mt-1">Evidence alignment with claim</p>
+                  </div>
+                </div>
+
+                {/* Verification Confidence */}
+                <div className="flex items-center gap-4">
+                  <div className="relative flex h-20 w-20 items-center justify-center flex-shrink-0">
+                    <svg className="absolute inset-0 h-full w-full -rotate-90">
+                      <circle
+                        cx="40"
+                        cy="40"
+                        r="34"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="5"
+                        className="text-white/[0.06]"
+                      />
+                      <circle
+                        cx="40"
+                        cy="40"
+                        r="34"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="5"
+                        strokeDasharray={`${2 * Math.PI * 34}`}
+                        strokeDashoffset={`${2 * Math.PI * 34 * (1 - result.verificationConfidence / 100)}`}
+                        className="text-[#10B981] transition-all duration-1000 ease-out"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <span className="text-xl font-bold text-white">
+                      {result.verificationConfidence}%
+                    </span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-white">✅ Verification</p>
+                    <p className="text-xs text-white/50 mt-1">Final verification score</p>
+                  </div>
                 </div>
               </div>
             </GlassCard>
@@ -416,9 +539,9 @@ export default function Results() {
               </div>
 
               <div className="space-y-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-white/40">Claim ID</span>
-                  <span className="font-mono text-xs text-white/80">{result.id}</span>
+                <div className="flex items-center justify-between gap-2 text-sm">
+                  <span className="shrink-0 text-white/40">Claim ID</span>
+                  <span className="truncate font-mono text-xs text-white/80">{result.id}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-white/40">Issued</span>

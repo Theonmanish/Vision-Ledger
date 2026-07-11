@@ -20,7 +20,17 @@ ALLOWED_IMAGE_TYPE_LABELS: str = "JPEG, PNG, WebP, GIF"
 CLAIMS_TABLE: str = "claims"
 
 # Columns returned when fetching claims (must match live Supabase schema).
+# The blockchain_* columns are added by migration 001; if that migration
+# has not yet been applied the query is retried without them (see
+# SupabaseService), so reads stay resilient.
+# The user_id and created_by_email columns are added by migration 002.
 CLAIM_COLUMNS: str = (
+    "id, claim_type, description, image_url, status, confidence, reason, "
+    "image_hash, report_hash, tx_hash, created_at, claim_input, "
+    "blockchain_hash, transaction_hash, block_number, network, "
+    "verification_anchor_time, blockchain_status, user_id, created_by_email"
+)
+CLAIM_COLUMNS_LEGACY: str = (
     "id, claim_type, description, image_url, status, confidence, reason, "
     "image_hash, report_hash, tx_hash, created_at, claim_input"
 )

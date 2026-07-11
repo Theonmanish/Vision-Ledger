@@ -8,7 +8,7 @@ them together — the pattern is already compatible with that.
 
 from typing import Annotated
 
-from fastapi import APIRouter, File, Form, UploadFile, Depends
+from fastapi import APIRouter, File, Form, UploadFile, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
 
 from app.core.config import settings
@@ -25,6 +25,7 @@ from app.services.storage_service import StorageService
 from app.services.claim_service import ClaimService
 from app.services.certificate_service import CertificateService
 from app.core.errors import not_found
+from app.core.auth import get_current_user
 
 # -- Router --
 
@@ -93,12 +94,14 @@ async def health() -> HealthResponse:
         "Allowed types: JPEG, PNG, WebP, GIF."
     ),
     responses={
+        401: {"description": "Not authenticated"},
         422: {"description": "Unsupported file type"},
         500: {"description": "Upload failed"},
     },
 )
 async def upload(
     storage: StorageDep,
+    current_user: dict = Depends(get_current_user),
     file: UploadFile = File(..., description="Evidence image file"),
 ) -> UploadResponse:
     """
@@ -126,12 +129,14 @@ async def upload(
         "objects, and a recommendation."
     ),
     responses={
+        401: {"description": "Not authenticated"},
         502: {"description": "AI returned an invalid response"},
         503: {"description": "AI service unavailable"},
     },
 )
 async def verify(
     claims: ClaimDep,
+    current_user: dict = Depends(get_current_user),
     claim_type: str = Form(..., description="Type of the claim"),
     description: str = Form(..., description="Description of the claim"),
     image_url: str = Form(..., description="Public URL of the uploaded image"),
@@ -140,6 +145,8 @@ async def verify(
         claim_type=claim_type,
         description=description,
         image_url=image_url,
+        user_id=current_user["id"],
+        user_email=current_user["email"],
     )
     return VerifyResponse(**result)
 
@@ -150,12 +157,16 @@ async def verify(
     "/history",
     response_model=HistoryResponse,
     summary="Claim history",
-    description="Return all stored claims, ordered newest-first.",
+    description="Return all stored claims for the authenticated user, ordered newest-first.",
+    responses={
+        401: {"description": "Not authenticated"},
+    },
 )
 async def history(
     claims: ClaimDep,
+    current_user: dict = Depends(get_current_user),
 ) -> HistoryResponse:
-    all_claims = claims.get_history()
+    all_claims = claims.get_history(user_id=current_user["id"])
     return HistoryResponse(claims=all_claims, count=len(all_claims))
 
 
@@ -166,15 +177,39 @@ async def history(
     response_model=ClaimDetailResponse,
     summary="Get claim by ID",
     description="Return full details for a single verification record.",
-    responses={404: {"description": "Claim not found"}},
+    responses={
+        401: {"description": "Not authenticated"},
+        403: {"description": "Forbidden - not the owner"},
+        404: {"description": "Claim not found"},
+    },
 )
 async def get_claim(
     claim_id: str,
     claims: ClaimDep,
+    current_user: dict = Depends(get_current_user),
 ) -> ClaimDetailResponse:
+    # DEBUG: Log the request details
+    print(f"[DEBUG] GET /claims/{claim_id}")
+    print(f"[DEBUG] Requested UUID: {claim_id}")
+    print(f"[DEBUG] Authenticated User ID: {current_user['id']}")
+    print(f"[DEBUG] Authenticated User Email: {current_user['email']}")
+
     claim = claims.get_claim(claim_id)
     if not claim:
+        print(f"[DEBUG] Claim not found in database")
         raise not_found("Claim")
+
+    print(f"[DEBUG] Database Claim Owner (user_id): {claim.get('user_id')}")
+    print(f"[DEBUG] Comparison: {claim.get('user_id')} == {current_user['id']} -> {claim.get('user_id') == current_user['id']}")
+
+    if claim.get("user_id") != current_user["id"]:
+        print(f"[DEBUG] OWNERSHIP CHECK FAILED - Returning 403")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to access this claim",
+        )
+
+    print(f"[DEBUG] Ownership check passed - Returning claim")
     return ClaimDetailResponse(**claim)
 
 
@@ -188,6 +223,8 @@ async def get_claim(
         "Returns application/pdf with Content-Disposition attachment."
     ),
     responses={
+        401: {"description": "Not authenticated"},
+        403: {"description": "Forbidden - not the owner"},
         404: {"description": "Claim not found"},
     },
 )
@@ -195,10 +232,16 @@ async def certificate(
     body: CertificateRequest,
     claims: ClaimDep,
     cert_service: CertificateDep,
+    current_user: dict = Depends(get_current_user),
 ) -> StreamingResponse:
     claim = claims.get_claim(body.claim_id)
     if not claim:
         raise not_found("Claim")
+    if claim.get("user_id") != current_user["id"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to access this claim",
+        )
 
     pdf_bytes, filename = cert_service.generate(claim)
     return StreamingResponse(
