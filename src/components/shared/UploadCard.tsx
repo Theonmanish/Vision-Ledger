@@ -82,7 +82,6 @@ export default function UploadCard({ onFileSelect, previewUrl, className }: Uplo
         ref={inputRef}
         type="file"
         accept="image/*"
-        capture="environment"
         className="sr-only"
         onChange={handleChange}
         aria-label="Upload evidence image"

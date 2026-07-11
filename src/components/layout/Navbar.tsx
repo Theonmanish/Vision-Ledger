@@ -1,24 +1,22 @@
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../../lib/utils';
-import { Menu, X, LogOut, User } from 'lucide-react';
+import { Menu, X, Home, FileCheck, History } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useToast } from '../ui/toast';
 import AvatarDropdown from './AvatarDropdown';
 
 const NAV_LINKS = [
-  { path: '/', label: 'Home' },
-  { path: '/verify', label: 'Verify Evidence' },
-  { path: '/history', label: 'History' },
+  { path: '/', label: 'Home', icon: Home },
+  { path: '/verify', label: 'Verify Evidence', icon: FileCheck },
+  { path: '/history', label: 'History', icon: History },
 ];
 
 export default function Navbar() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { user, logout } = useAuth();
-  const { addToast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     setMobileOpen(false);
@@ -31,23 +29,15 @@ export default function Navbar() {
     };
   }, [mobileOpen]);
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      addToast({
-        type: 'success',
-        title: 'Logged out',
-        message: 'You have been successfully logged out',
-      });
-      setMobileOpen(false);
-    } catch (error: any) {
-      addToast({
-        type: 'error',
-        title: 'Logout failed',
-        message: error.message || 'Please try again',
-      });
-    }
-  };
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && mobileOpen) {
+        setMobileOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [mobileOpen]);
 
   return (
     <header className="sticky top-0 z-50 w-full safe-top">
@@ -104,105 +94,126 @@ export default function Navbar() {
             })}
           </nav>
 
-          <div className="hidden md:flex items-center gap-3">
+          <div className="flex items-center gap-3">
             {user ? (
               <AvatarDropdown />
             ) : (
               <>
-                <Button variant="ghost" size="sm" asChild>
+                <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex">
                   <Link to="/login">Login</Link>
                 </Button>
-                <Button size="sm" asChild>
+                <Button size="sm" asChild className="hidden md:inline-flex">
                   <Link to="/signup">Sign Up</Link>
                 </Button>
               </>
             )}
-          </div>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden touch-target"
-            onClick={() => setMobileOpen(!mobileOpen)}
-            aria-expanded={mobileOpen}
-            aria-controls="mobile-nav"
-            aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
-          >
-            {mobileOpen ? (
-              <X className="h-5 w-5" />
-            ) : (
-              <Menu className="h-5 w-5" />
-            )}
-          </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden touch-target"
+              onClick={() => setMobileOpen(!mobileOpen)}
+              aria-expanded={mobileOpen}
+              aria-controls="mobile-nav"
+              aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+            >
+              {mobileOpen ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <Menu className="h-5 w-5" />
+              )}
+            </Button>
+          </div>
         </div>
       </div>
 
+      {/* Mobile Side Drawer */}
       <AnimatePresence>
         {mobileOpen && (
-          <motion.div
-            id="mobile-nav"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.25 }}
-            className="overflow-hidden border-b border-white/10 bg-white/[0.05] backdrop-blur-3xl md:hidden"
-          >
-            <nav className="flex flex-col gap-1 px-4 py-4 safe-x" aria-label="Mobile navigation">
-              {NAV_LINKS.map((link) => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  onClick={() => setMobileOpen(false)}
-                  aria-current={location.pathname === link.path ? 'page' : undefined}
-                  className={cn(
-                    'rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 min-h-[44px] flex items-center',
-                    location.pathname === link.path
-                      ? 'border border-white/10 bg-white/[0.08] text-white'
-                      : 'text-white/60 hover:bg-white/[0.05] hover:text-white'
-                  )}
-                >
-                  {link.label}
-                </Link>
-              ))}
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
+              onClick={() => setMobileOpen(false)}
+              aria-hidden="true"
+            />
 
-              {user ? (
-                <>
-                  <div className="flex items-center gap-2 px-4 py-3 mt-2 rounded-xl bg-white/5 border border-white/10">
-                    <User className="h-4 w-4 text-white/60" />
-                    <span className="text-sm text-white/80 truncate">{user.email}</span>
-                  </div>
+            {/* Drawer */}
+            <motion.div
+              id="mobile-nav"
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed right-0 top-0 z-50 h-full w-[280px] border-l border-white/10 bg-[#0a0a0a]/95 backdrop-blur-2xl shadow-2xl md:hidden"
+              aria-label="Mobile navigation"
+            >
+              <div className="flex h-full flex-col">
+                {/* Drawer Header */}
+                <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
+                  <span className="text-sm font-medium text-white/60">Menu</span>
                   <Button
                     variant="ghost"
-                    className="mt-2 w-full min-h-[44px]"
-                    onClick={handleLogout}
+                    size="icon"
+                    onClick={() => setMobileOpen(false)}
+                    aria-label="Close menu"
+                    className="h-8 w-8"
                   >
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Logout
+                    <X className="h-4 w-4" />
                   </Button>
-                </>
-              ) : (
-                <>
-                  <Button asChild className="mt-2 w-full min-h-[44px]">
-                    <Link to="/verify" onClick={() => setMobileOpen(false)}>
-                      Start Verification
-                    </Link>
-                  </Button>
-                  <div className="flex gap-2 mt-2">
-                    <Button variant="ghost" className="flex-1 min-h-[44px]" asChild>
-                      <Link to="/login" onClick={() => setMobileOpen(false)}>
-                        Login
-                      </Link>
-                    </Button>
-                    <Button className="flex-1 min-h-[44px]" asChild>
-                      <Link to="/signup" onClick={() => setMobileOpen(false)}>
-                        Sign Up
-                      </Link>
-                    </Button>
+                </div>
+
+                {/* Navigation Links */}
+                <nav className="flex-1 overflow-y-auto px-4 py-6">
+                  <div className="space-y-2">
+                    {NAV_LINKS.map((link) => {
+                      const Icon = link.icon;
+                      const isActive = location.pathname === link.path;
+
+                      return (
+                        <Link
+                          key={link.path}
+                          to={link.path}
+                          aria-current={isActive ? 'page' : undefined}
+                          className={cn(
+                            'flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 min-h-[48px]',
+                            isActive
+                              ? 'border border-white/10 bg-white/[0.08] text-white'
+                              : 'text-white/60 hover:bg-white/[0.05] hover:text-white'
+                          )}
+                        >
+                          <Icon className="h-5 w-5" />
+                          {link.label}
+                        </Link>
+                      );
+                    })}
                   </div>
-                </>
-              )}
-            </nav>
-          </motion.div>
+                </nav>
+
+                {/* Auth Section */}
+                {!user && (
+                  <div className="border-t border-white/10 px-4 py-4">
+                    <div className="space-y-2">
+                      <Button asChild className="w-full min-h-[44px]">
+                        <Link to="/login" onClick={() => setMobileOpen(false)}>
+                          Login
+                        </Link>
+                      </Button>
+                      <Button variant="outline" asChild className="w-full min-h-[44px]">
+                        <Link to="/signup" onClick={() => setMobileOpen(false)}>
+                          Sign Up
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </header>
