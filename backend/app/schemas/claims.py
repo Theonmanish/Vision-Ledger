@@ -46,28 +46,28 @@ class AIResult(BaseModel):
     vision_confidence: int = Field(..., ge=0, le=100, description="How confidently the AI detected visual content (0-100)")
     claim_match_confidence: int = Field(..., ge=0, le=100, description="How strongly the detected scene supports the claim (0-100)")
     verification_confidence: int = Field(..., ge=0, le=100, description="Final verification confidence score (0-100)")
-    objects_detected: list[dict[str, Any]] = Field(..., description="List of detected objects with label and confidence")
+    objects_detected: list[dict[str, Any]] = Field(..., max_length=50, description="List of detected objects with label and confidence")
     estimated_quantity: int | None = None
-    reason: str
-    limitations: str
-    recommendation: str
+    reason: str = Field(..., max_length=2000)
+    limitations: str = Field(..., max_length=2000)
+    recommendation: str = Field(..., max_length=2000)
 
 
 class VerifyResponse(BaseModel):
     """Returned by the /verify endpoint."""
-    claimId: str
-    status: str
+    claimId: str = Field(..., max_length=100)
+    status: str = Field(..., max_length=50)
     confidence: float
     vision_confidence: int
     claim_match_confidence: int
     verification_confidence: int
-    reason: str
+    reason: str = Field(..., max_length=2000)
     claim_supported: bool
-    objects_detected: list[ObjectDetection]
+    objects_detected: list[ObjectDetection] = Field(..., max_length=50)
     estimated_quantity: int | None = None
-    limitations: str
-    recommendation: str
-    blockchain_status: str | None = None
+    limitations: str = Field(..., max_length=2000)
+    recommendation: str = Field(..., max_length=2000)
+    blockchain_status: str | None = Field(None, max_length=50)
 
 
 # ── History ───────────────────────────────────────────────────
@@ -82,36 +82,36 @@ class HistoryResponse(BaseModel):
 
 class ClaimDetailResponse(BaseModel):
     """Full claim record returned by GET /claims/{claim_id}."""
-    id: str | None = None
-    claim_id: str
-    claim_type: str
-    description: str | None = None
-    status: str
+    id: str | None = Field(None, max_length=100)
+    claim_id: str = Field(..., max_length=100)
+    claim_type: str = Field(..., max_length=100)
+    description: str | None = Field(None, max_length=5000)
+    status: str = Field(..., max_length=50)
     confidence: float
     vision_confidence: int | None = None
     claim_match_confidence: int | None = None
     verification_confidence: int | None = None
-    reason: str | None = None
-    image_url: str | None = None
+    reason: str | None = Field(None, max_length=2000)
+    image_url: str | None = Field(None, max_length=2048)
     created_at: str | None = None
     claim_supported: bool | None = None
-    objects_detected: list[ObjectDetection] | None = None
+    objects_detected: list[ObjectDetection] | None = Field(None, max_length=50)
     estimated_quantity: int | None = None
-    limitations: str | None = None
-    recommendation: str | None = None
+    limitations: str | None = Field(None, max_length=2000)
+    recommendation: str | None = Field(None, max_length=2000)
     # ── Blockchain proof ───────────────────────────────────────
-    blockchain_hash: str | None = None
-    transaction_hash: str | None = None
+    blockchain_hash: str | None = Field(None, max_length=256)
+    transaction_hash: str | None = Field(None, max_length=256)
     block_number: int | None = None
-    network: str | None = None
+    network: str | None = Field(None, max_length=50)
     verification_anchor_time: str | None = None
-    blockchain_status: str | None = None
-    contract_address: str | None = None
-    explorer_url: str | None = None
+    blockchain_status: str | None = Field(None, max_length=50)
+    contract_address: str | None = Field(None, max_length=256)
+    explorer_url: str | None = Field(None, max_length=2048)
 
 
 # ── Certificate ─────────────────────────────────────────────
 
 class CertificateRequest(BaseModel):
     """Body for POST /certificate."""
-    claim_id: str = Field(..., min_length=1, description="Public claim identifier")
+    claim_id: str = Field(..., min_length=1, max_length=100, description="Public claim identifier")

@@ -6,12 +6,14 @@ you may split into sub-routers (e.g. ``/api/v1/upload``) and mount
 them together — the pattern is already compatible with that.
 """
 
+import logging
 from typing import Annotated
 
-from fastapi import APIRouter, File, Form, UploadFile, Depends, HTTPException, status
+from fastapi import APIRouter, File, Form, UploadFile, Depends, HTTPException, status, Request
 from fastapi.responses import StreamingResponse
 
 from app.core.config import settings
+from app.core.limiter import limiter
 from app.schemas.claims import (
     StatusResponse,
     HealthResponse,
@@ -26,6 +28,8 @@ from app.services.claim_service import ClaimService
 from app.services.certificate_service import CertificateService
 from app.core.errors import not_found
 from app.core.auth import get_current_user
+
+logger = logging.getLogger(__name__)
 
 # -- Router --
 
@@ -63,7 +67,8 @@ CertificateDep = Annotated[CertificateService, Depends(_certificate_service)]
     summary="Service status",
     description="Confirm the backend is reachable and identify itself.",
 )
-async def root() -> StatusResponse:
+@limiter.limit("60/minute")
+async def root(request: Request) -> StatusResponse:
     return StatusResponse(
         status="ok",
         service=settings.APP_NAME,
@@ -78,7 +83,8 @@ async def root() -> StatusResponse:
     summary="Health check",
     description="Lightweight liveness probe — always returns 200.",
 )
-async def health() -> HealthResponse:
+@limiter.limit("60/minute")
+async def health(request: Request) -> HealthResponse:
     return HealthResponse()
 
 
@@ -99,7 +105,9 @@ async def health() -> HealthResponse:
         500: {"description": "Upload failed"},
     },
 )
+@limiter.limit("20/minute")
 async def upload(
+    request: Request,
     storage: StorageDep,
     current_user: dict = Depends(get_current_user),
     file: UploadFile = File(..., description="Evidence image file"),
@@ -134,12 +142,14 @@ async def upload(
         503: {"description": "AI service unavailable"},
     },
 )
+@limiter.limit("10/minute")
 async def verify(
+    request: Request,
     claims: ClaimDep,
     current_user: dict = Depends(get_current_user),
-    claim_type: str = Form(..., description="Type of the claim"),
-    description: str = Form(..., description="Description of the claim"),
-    image_url: str = Form(..., description="Public URL of the uploaded image"),
+    claim_type: str = Form(..., max_length=100, description="Type of the claim"),
+    description: str = Form(..., max_length=5000, description="Description of the claim"),
+    image_url: str = Form(..., max_length=2048, description="Public URL of the uploaded image"),
 ) -> VerifyResponse:
     result = claims.verify(
         claim_type=claim_type,
@@ -162,7 +172,9 @@ async def verify(
         401: {"description": "Not authenticated"},
     },
 )
+@limiter.limit("60/minute")
 async def history(
+    request: Request,
     claims: ClaimDep,
     current_user: dict = Depends(get_current_user),
 ) -> HistoryResponse:
@@ -183,33 +195,29 @@ async def history(
         404: {"description": "Claim not found"},
     },
 )
+@limiter.limit("60/minute")
 async def get_claim(
+    request: Request,
     claim_id: str,
     claims: ClaimDep,
     current_user: dict = Depends(get_current_user),
 ) -> ClaimDetailResponse:
-    # DEBUG: Log the request details
-    print(f"[DEBUG] GET /claims/{claim_id}")
-    print(f"[DEBUG] Requested UUID: {claim_id}")
-    print(f"[DEBUG] Authenticated User ID: {current_user['id']}")
-    print(f"[DEBUG] Authenticated User Email: {current_user['email']}")
-
     claim = claims.get_claim(claim_id)
     if not claim:
-        print(f"[DEBUG] Claim not found in database")
         raise not_found("Claim")
 
-    print(f"[DEBUG] Database Claim Owner (user_id): {claim.get('user_id')}")
-    print(f"[DEBUG] Comparison: {claim.get('user_id')} == {current_user['id']} -> {claim.get('user_id') == current_user['id']}")
-
     if claim.get("user_id") != current_user["id"]:
-        print(f"[DEBUG] OWNERSHIP CHECK FAILED - Returning 403")
+        logger.warning(
+            "security_event=unauthorized_access_attempt "
+            "claim_id=%s user_id=%s",
+            claim_id,
+            current_user["id"],
+        )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to access this claim",
         )
 
-    print(f"[DEBUG] Ownership check passed - Returning claim")
     return ClaimDetailResponse(**claim)
 
 

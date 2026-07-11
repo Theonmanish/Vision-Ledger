@@ -13,6 +13,17 @@ ALLOWED_IMAGE_TYPES: set[str] = {
     "image/gif",
 }
 
+# Maximum file size for uploads (10 MB).
+MAX_FILE_SIZE: int = 10 * 1024 * 1024
+
+# Magic bytes for image format validation.
+IMAGE_MAGIC_BYTES: dict[str, list[bytes]] = {
+    "image/jpeg": [b"\xff\xd8\xff"],
+    "image/png": [b"\x89png\r\n\x1a\n"],
+    "image/webp": [b"riff"],  # WebP starts with "RIFF"
+    "image/gif": [b"gif87a", b"gif89a"],
+}
+
 # Human-readable label (used in error messages).
 ALLOWED_IMAGE_TYPE_LABELS: str = "JPEG, PNG, WebP, GIF"
 

@@ -2,10 +2,14 @@
 Authentication dependency for extracting user from Supabase JWT.
 """
 
+import logging
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from supabase import create_client, Client
 from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 security = HTTPBearer()
 
@@ -47,10 +51,15 @@ async def get_current_user(
 
         return user_data
 
+    except HTTPException:
+        # Re-raise HTTPExceptions as-is (already sanitized)
+        raise
     except Exception as e:
+        # Log the actual error for debugging, but return generic message to client
+        logger.error(f"Authentication error: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Authentication failed: {str(e)}",
+            detail="Authentication failed",
             headers={"WWW-Authenticate": "Bearer"},
         )
 

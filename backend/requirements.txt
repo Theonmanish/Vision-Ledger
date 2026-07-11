@@ -12,3 +12,4 @@ svglib>=1.5.0
 qrcode[pil]>=7.4.0
 Pillow>=10.0.0
 web3>=6.0.0
+slowapi==0.1.9
