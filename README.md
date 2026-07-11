@@ -14,7 +14,6 @@
   <img src="https://img.shields.io/badge/Supabase-Auth-success" />
   <img src="https://img.shields.io/badge/Ethereum-Sepolia-purple" />
   <img src="https://img.shields.io/badge/PWA-Ready-orange" />
-  <img src="https://img.shields.io/badge/License-MIT-blue" />
 </p>
 
 ---
