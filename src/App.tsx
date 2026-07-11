@@ -12,6 +12,7 @@ import { ToastProvider } from './components/ui/toast';
 
 const Landing = lazy(() => import('./pages/Landing'));
 const Verify = lazy(() => import('./pages/Verify'));
+const BulkVerify = lazy(() => import('./pages/BulkVerify'));
 const Results = lazy(() => import('./pages/Results'));
 const History = lazy(() => import('./pages/History'));
 const Login = lazy(() => import('./pages/Login'));
@@ -55,6 +56,14 @@ function App() {
                     element={
                       <ProtectedRoute>
                         <Verify />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/bulk-verify"
+                    element={
+                      <ProtectedRoute>
+                        <BulkVerify />
                       </ProtectedRoute>
                     }
                   />

@@ -22,10 +22,14 @@ from app.schemas.claims import (
     HistoryResponse,
     ClaimDetailResponse,
     CertificateRequest,
+    BatchCreateRequest,
+    BatchResponse,
+    BatchListResponse,
 )
 from app.services.storage_service import StorageService
 from app.services.claim_service import ClaimService
 from app.services.certificate_service import CertificateService
+from app.services.batch_service import BatchService
 from app.core.errors import not_found
 from app.core.auth import get_current_user
 
@@ -53,10 +57,16 @@ def _certificate_service() -> CertificateService:
     return CertificateService()
 
 
+def _batch_service() -> BatchService:
+    """Yield a fresh BatchService per request."""
+    return BatchService()
+
+
 # Type aliases for cleaner injection signatures.
 StorageDep = Annotated[StorageService, Depends(_storage_service)]
 ClaimDep = Annotated[ClaimService, Depends(_claim_service)]
 CertificateDep = Annotated[CertificateService, Depends(_certificate_service)]
+BatchDep = Annotated[BatchService, Depends(_batch_service)]
 
 
 # -- GET / --
@@ -259,3 +269,110 @@ async def certificate(
             "Content-Disposition": f'attachment; filename="{filename}"',
         },
     )
+
+
+# -- POST /batches --
+
+@router.post(
+    "/batches",
+    response_model=BatchResponse,
+    summary="Create batch verification",
+    description=(
+        "Submit multiple pre-uploaded images for sequential verification. "
+        "Images must be uploaded first via /upload endpoint. "
+        "Returns batch summary with results for each image."
+    ),
+    responses={
+        401: {"description": "Not authenticated"},
+        422: {"description": "Invalid request (too many images, invalid data)"},
+    },
+)
+@limiter.limit("5/minute")
+async def create_batch(
+    request: Request,
+    batch_service: BatchDep,
+    current_user: dict = Depends(get_current_user),
+    body: BatchCreateRequest = ...,
+) -> BatchResponse:
+    """
+    Create a batch verification job.
+
+    Accepts a list of image URLs (already uploaded) with their claim types
+    and descriptions. Processes them sequentially.
+    """
+    # Validate limits
+    if len(body.images) > 10:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Maximum 10 images per batch",
+        )
+
+    if len(body.images) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="At least one image is required",
+        )
+
+    # Process batch
+    result = batch_service.create_batch_from_urls(
+        user_id=current_user["id"],
+        project_name=body.project_name,
+        images=[
+            {
+                "image_url": img.image_url,
+                "claim_type": img.claim_type,
+                "description": img.description,
+            }
+            for img in body.images
+        ],
+    )
+
+    return BatchResponse(**result)
+
+
+# -- GET /batches --
+
+@router.get(
+    "/batches",
+    response_model=BatchListResponse,
+    summary="List user batches",
+    description="Return all verification batches for the authenticated user.",
+    responses={
+        401: {"description": "Not authenticated"},
+    },
+)
+@limiter.limit("60/minute")
+async def list_batches(
+    request: Request,
+    batch_service: BatchDep,
+    current_user: dict = Depends(get_current_user),
+) -> BatchListResponse:
+    batches = batch_service.get_user_batches(user_id=current_user["id"])
+    return BatchListResponse(batches=batches, count=len(batches))
+
+
+# -- GET /batches/{batch_id} --
+
+@router.get(
+    "/batches/{batch_id}",
+    response_model=BatchResponse,
+    summary="Get batch details",
+    description="Return full details for a verification batch including all claims.",
+    responses={
+        401: {"description": "Not authenticated"},
+        403: {"description": "Forbidden - not the owner"},
+        404: {"description": "Batch not found"},
+    },
+)
+@limiter.limit("60/minute")
+async def get_batch(
+    request: Request,
+    batch_id: str,
+    batch_service: BatchDep,
+    current_user: dict = Depends(get_current_user),
+) -> BatchResponse:
+    batch = batch_service.get_batch(batch_id=batch_id, user_id=current_user["id"])
+    if not batch:
+        raise not_found("Batch")
+
+    return BatchResponse(**batch)

@@ -1,4 +1,4 @@
-import type { ClaimType, HistoryRecord, VerificationResult } from '../types';
+import type { ClaimType, HistoryRecord, VerificationResult, Batch, BatchWithResults, BatchListResponse, BatchImageItem } from '../types';
 import { mapClaimToResult, mapHistoryRecord } from './mappers';
 import { supabase } from './supabase';
 
@@ -177,4 +177,25 @@ export async function downloadCertificate(claimId: string): Promise<void> {
   anchor.click();
   anchor.remove();
   URL.revokeObjectURL(url);
+}
+
+// ── Batch Verification API ────────────────────────────────────
+
+export async function createBatch(params: {
+  project_name?: string;
+  images: BatchImageItem[];
+}): Promise<BatchWithResults> {
+  return request<BatchWithResults>('/batches', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+}
+
+export async function fetchBatches(): Promise<BatchListResponse> {
+  return request<BatchListResponse>('/batches');
+}
+
+export async function fetchBatch(batchId: string): Promise<BatchWithResults> {
+  return request<BatchWithResults>(`/batches/${encodeURIComponent(batchId)}`);
 }

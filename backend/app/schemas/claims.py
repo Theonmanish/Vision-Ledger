@@ -115,3 +115,61 @@ class ClaimDetailResponse(BaseModel):
 class CertificateRequest(BaseModel):
     """Body for POST /certificate."""
     claim_id: str = Field(..., min_length=1, max_length=100, description="Public claim identifier")
+
+
+# ── Batch Verification ──────────────────────────────────────
+
+class BatchImageItem(BaseModel):
+    """Single image in a batch verification request."""
+    image_url: str = Field(..., max_length=2048, description="URL of the uploaded image")
+    claim_type: str = Field(..., max_length=100, description="Type of claim")
+    description: str = Field(..., max_length=5000, description="Description of the claim")
+
+
+class BatchCreateRequest(BaseModel):
+    """Request body for creating a batch verification."""
+    project_name: str | None = Field(None, max_length=200, description="Optional project name")
+    images: list[BatchImageItem] = Field(..., min_length=1, max_length=10, description="List of images to verify (max 10)")
+
+
+class BatchImageResult(BaseModel):
+    """Result for a single image in a batch."""
+    index: int
+    filename: str | None = None
+    claim_id: str | None = None
+    status: str = Field(..., max_length=20)  # "success" or "failed"
+    confidence: float | None = None
+    error: str | None = None
+
+
+class BatchResponse(BaseModel):
+    """Response for batch operations."""
+    batch_id: str
+    project_name: str | None = None
+    total_images: int
+    completed_images: int
+    failed_images: int
+    average_confidence: float
+    status: str = Field(..., max_length=20)  # "processing", "completed", "partial", "failed"
+    created_at: str
+    results: list[BatchImageResult] | None = None
+
+
+class BatchSummary(BaseModel):
+    """Summary of a batch for list views."""
+    batch_id: str = Field(..., alias="id")
+    project_name: str | None = None
+    total_images: int
+    completed_images: int
+    failed_images: int
+    average_confidence: float
+    status: str
+    created_at: str
+
+    model_config = {"populate_by_name": True}
+
+
+class BatchListResponse(BaseModel):
+    """Response for listing batches."""
+    batches: list[BatchSummary]
+    count: int

@@ -93,3 +93,42 @@ export const STATUS_LABELS: Record<VerificationStatus, string> = {
   inconclusive: 'Inconclusive',
   failed: 'Failed',
 };
+
+// ── Batch Verification Types ──────────────────────────────────
+
+export type BatchStatus = 'processing' | 'completed' | 'partial' | 'failed';
+
+export interface BatchImageItem {
+  image_url: string;
+  claim_type: ClaimType;
+  description: string;
+}
+
+export interface BatchImageResult {
+  index: number;
+  filename: string | null;
+  claim_id: string | null;
+  status: 'success' | 'failed';
+  confidence: number | null;
+  error: string | null;
+}
+
+export interface Batch {
+  id: string;
+  project_name: string | null;
+  total_images: number;
+  completed_images: number;
+  failed_images: number;
+  average_confidence: number;
+  status: BatchStatus;
+  created_at: string;
+}
+
+export interface BatchWithResults extends Batch {
+  results: BatchImageResult[];
+}
+
+export interface BatchListResponse {
+  batches: Batch[];
+  count: number;
+}

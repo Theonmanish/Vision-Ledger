@@ -49,6 +49,7 @@ class ClaimService:
         image_url: str,
         user_id: str | None = None,
         user_email: str | None = None,
+        batch_id: str | None = None,
     ) -> dict:
         """
         Analyse the claim image with AI, persist the result, and

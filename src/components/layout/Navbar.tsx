@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../../lib/utils';
-import { Menu, X, Home, FileCheck, History } from 'lucide-react';
+import { Menu, X, Home, FileCheck, History, Layers } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -10,6 +10,7 @@ import AvatarDropdown from './AvatarDropdown';
 const NAV_LINKS = [
   { path: '/', label: 'Home', icon: Home },
   { path: '/verify', label: 'Verify Evidence', icon: FileCheck },
+  { path: '/bulk-verify', label: 'Bulk Verify', icon: Layers },
   { path: '/history', label: 'History', icon: History },
 ];
 

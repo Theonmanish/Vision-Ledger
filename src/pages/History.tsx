@@ -20,10 +20,10 @@ import StatusBadge from '../components/shared/StatusBadge';
 import EmptyState from '../components/shared/EmptyState';
 import LoadingScreen from '../components/shared/LoadingScreen';
 import VerificationDashboard from '../components/analytics/VerificationDashboard';
-import { CLAIM_TYPE_LABELS, type HistoryRecord } from '../types';
+import { CLAIM_TYPE_LABELS, type HistoryRecord, type Batch, type BatchStatus } from '../types';
 import { formatDate, truncateHash, cn } from '../lib/utils';
-import { fetchHistory, ApiError } from '../lib/api';
-import { Search, Eye, History, AlertCircle, Link2 } from 'lucide-react';
+import { fetchHistory, fetchBatches, ApiError } from '../lib/api';
+import { Search, Eye, History, AlertCircle, Link2, FolderOpen, CheckCircle2, XCircle, Clock } from 'lucide-react';
 
 function HistoryMobileCard({ record }: { record: HistoryRecord }) {
   return (
@@ -67,18 +67,87 @@ function HistoryMobileCard({ record }: { record: HistoryRecord }) {
   );
 }
 
+function BatchStatusBadge({ status }: { status: BatchStatus }) {
+  const config = {
+    completed: { color: 'text-emerald-400', bg: 'bg-emerald-500/10', label: 'Completed' },
+    partial: { color: 'text-amber-400', bg: 'bg-amber-500/10', label: 'Partial' },
+    failed: { color: 'text-red-400', bg: 'bg-red-500/10', label: 'Failed' },
+    processing: { color: 'text-blue-400', bg: 'bg-blue-500/10', label: 'Processing' },
+  };
+  const { color, bg, label } = config[status];
+
+  return (
+    <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium', bg, color)}>
+      {status === 'completed' && <CheckCircle2 className="h-3 w-3" />}
+      {status === 'failed' && <XCircle className="h-3 w-3" />}
+      {status === 'processing' && <Clock className="h-3 w-3" />}
+      {label}
+    </span>
+  );
+}
+
+function BatchCard({ batch }: { batch: Batch }) {
+  return (
+    <GlassCard padding="md" className="space-y-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <FolderOpen className="h-4 w-4 text-[#3B82F6]" />
+            <p className="font-medium text-white truncate">
+              {batch.project_name || 'Unnamed Batch'}
+            </p>
+          </div>
+          <p className="mt-1 text-xs text-white/50 font-mono">{truncateHash(batch.id)}</p>
+        </div>
+        <BatchStatusBadge status={batch.status} />
+      </div>
+
+      <div className="grid grid-cols-3 gap-3 text-center">
+        <div>
+          <p className="text-lg font-bold text-white">{batch.total_images}</p>
+          <p className="text-xs text-white/50">Total</p>
+        </div>
+        <div>
+          <p className="text-lg font-bold text-emerald-400">{batch.completed_images}</p>
+          <p className="text-xs text-white/50">Verified</p>
+        </div>
+        <div>
+          <p className="text-lg font-bold text-amber-400">{batch.failed_images}</p>
+          <p className="text-xs text-white/50">Failed</p>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between text-xs text-white/60">
+        <span>Avg Confidence: {batch.average_confidence.toFixed(1)}%</span>
+        <span>{formatDate(batch.created_at)}</span>
+      </div>
+
+      <Button variant="secondary" size="sm" asChild className="w-full min-h-[44px]">
+        <Link to={`/results/${batch.id}`}>
+          <Eye className="mr-1.5 h-4 w-4" aria-hidden="true" />
+          Open Batch
+        </Link>
+      </Button>
+    </GlassCard>
+  );
+}
+
 export default function HistoryPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [records, setRecords] = useState<HistoryRecord[]>([]);
+  const [batches, setBatches] = useState<Batch[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
-    fetchHistory()
-      .then((data) => {
-        if (!cancelled) setRecords(data);
+    Promise.all([fetchHistory(), fetchBatches()])
+      .then(([historyData, batchData]) => {
+        if (!cancelled) {
+          setRecords(historyData);
+          setBatches(batchData.batches);
+        }
       })
       .catch((err) => {
         if (!cancelled) {
@@ -137,7 +206,7 @@ export default function HistoryPage() {
           </div>
         )}
 
-        {records.length === 0 && !error ? (
+        {records.length === 0 && batches.length === 0 && !error ? (
           <EmptyState
             icon={History}
             title="No verifications yet"
@@ -149,6 +218,18 @@ export default function HistoryPage() {
           <>
             {/* Verification Analytics Dashboard */}
             <VerificationDashboard records={records} />
+
+            {/* Batches Section */}
+            {batches.length > 0 && (
+              <div className="mb-8">
+                <h2 className={cn(ds.label, 'mb-4')}>Verification Batches</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {batches.map((batch) => (
+                    <BatchCard key={batch.id} batch={batch} />
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="mb-6">
               <div className="relative w-full max-w-sm">
@@ -263,6 +344,7 @@ export default function HistoryPage() {
 
             <p className="mt-4 text-xs text-muted">
               Showing {filtered.length} of {records.length} records
+              {batches.length > 0 && ` • ${batches.length} batches`}
             </p>
           </>
         )}

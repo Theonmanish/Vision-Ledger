@@ -81,6 +81,8 @@ def normalize_claim_record(row: dict[str, Any]) -> dict[str, Any]:
         # ── User ownership (migration 002) ────────────────────────
         "user_id": row.get("user_id"),
         "created_by_email": row.get("created_by_email"),
+        # ── Batch reference (migration 003) ───────────────────────
+        "batch_id": row.get("batch_id"),
         # ── Blockchain proof (real on-chain values) ───────────────
         "blockchain_hash": blockchain_hash,
         "transaction_hash": transaction_hash,
@@ -117,6 +119,7 @@ def build_claim_payload(
     blockchain: dict[str, Any] | None = None,
     user_id: str | None = None,
     user_email: str | None = None,
+    batch_id: str | None = None,
     vision_confidence: int = 0,
     claim_match_confidence: int = 0,
     verification_confidence: int = 0,
@@ -169,5 +172,9 @@ def build_claim_payload(
         payload["user_id"] = user_id
     if user_email:
         payload["created_by_email"] = user_email
+
+    # Batch reference (migration 003)
+    if batch_id:
+        payload["batch_id"] = batch_id
 
     return payload

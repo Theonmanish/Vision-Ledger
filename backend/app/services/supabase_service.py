@@ -177,3 +177,50 @@ class SupabaseService:
                 logger.exception("Supabase get_claim_by_id failed for %s", claim_id)
                 return None
         return None
+
+    def update_row(self, table: str, filters: dict, updates: dict) -> dict | None:
+        """
+        Update rows matching filters with the given updates.
+
+        Args:
+            table: Table name
+            filters: Dict of column=value pairs to match
+            updates: Dict of column=value pairs to update
+
+        Returns:
+            Updated row dict or None on failure
+        """
+        try:
+            query = self._client.table(table).update(updates)
+            for col, val in filters.items():
+                query = query.eq(col, val)
+            resp = query.execute()
+            return resp.data[0] if resp.data else None
+        except Exception:
+            logger.exception("Supabase update failed for table %s", table)
+            return None
+
+    def get_rows(self, table: str, filters: dict, columns: str = "*", order: str | None = None) -> list[dict]:
+        """
+        Fetch rows matching filters.
+
+        Args:
+            table: Table name
+            filters: Dict of column=value pairs to match
+            columns: Columns to select (default: all)
+            order: Column to order by (optional)
+
+        Returns:
+            List of matching rows
+        """
+        try:
+            query = self._client.table(table).select(columns)
+            for col, val in filters.items():
+                query = query.eq(col, val)
+            if order:
+                query = query.order(order, desc=True)
+            resp = query.execute()
+            return resp.data or []
+        except Exception:
+            logger.exception("Supabase get_rows failed for table %s", table)
+            return []
