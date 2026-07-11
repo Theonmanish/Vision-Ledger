@@ -149,28 +149,7 @@ function DashboardPreview() {
           ))}
         </div>
 
-        {/* Bottom metrics bar */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 1.2 }}
-          className="relative z-10 mt-6 grid grid-cols-2 gap-3 border-t border-white/[0.08] pt-4 sm:grid-cols-4"
-        >
-          {[
-            { label: 'Total Verified', value: '2,847' },
-            { label: 'Avg. Confidence', value: '94.2%' },
-            { label: 'On-Chain Records', value: '2,847' },
-            { label: 'Certificates Issued', value: '2,847' },
-          ].map((metric) => (
-            <div
-              key={metric.label}
-              className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 backdrop-blur-sm"
-            >
-              <p className="text-[10px] text-white/40">{metric.label}</p>
-              <p className="mt-0.5 text-sm font-semibold text-white">{metric.value}</p>
-            </div>
-          ))}
-        </motion.div>
+        
       </div>
     </motion.div>
   );

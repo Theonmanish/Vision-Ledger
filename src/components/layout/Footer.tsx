@@ -55,15 +55,17 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="mb-4 text-sm font-semibold text-white">Legal</h4>
+            <h4 className="mb-4 text-sm font-semibold text-white">Contact Us</h4>
+
             <ul className="space-y-3">
-              {['Privacy Policy', 'Terms of Service', 'Cookie Policy'].map((item) => (
-                <li key={item}>
-                  <span className="cursor-pointer text-sm text-white/50 transition-colors duration-200 hover:text-white">
-                    {item}
-                  </span>
-                </li>
-              ))}
+              <li>
+                <a
+                  href="mailto:becomeprime444@gmail.com"
+                  className="text-sm text-white/50 transition-colors duration-200 hover:text-white"
+                >
+                  becomeprime444@gmail.com
+                </a>
+              </li>
             </ul>
           </div>
         </div>
