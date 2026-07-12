@@ -17,7 +17,6 @@ import type { Notification } from '../../types';
 import { formatRelativeTime } from '../../lib/utils';
 import { cn } from '../../lib/utils';
 import { downloadCertificate } from '../../lib/api';
-import { useToast } from '../ui/toast';
 
 interface NotificationCardProps {
   notification: Notification;
@@ -66,7 +65,6 @@ export default function NotificationCard({ notification, onMarkRead }: Notificat
   const config = NOTIFICATION_CONFIG[notification.notification_type] || NOTIFICATION_CONFIG.verification_completed;
   const Icon = config.icon;
   const navigate = useNavigate();
-  const { addToast } = useToast();
 
   const handleAction = async () => {
     // Mark as read when clicked
@@ -92,17 +90,9 @@ export default function NotificationCard({ notification, onMarkRead }: Notificat
         if (notification.claim_id) {
           try {
             await downloadCertificate(notification.claim_id);
-            addToast({
-              type: 'success',
-              title: 'Certificate downloaded',
-              message: 'Your certificate has been downloaded successfully.',
-            });
+            console.log('Certificate downloaded successfully');
           } catch (error) {
-            addToast({
-              type: 'error',
-              title: 'Download failed',
-              message: 'Unable to download certificate. Please try again.',
-            });
+            console.error('Failed to download certificate:', error);
           }
         }
         break;

@@ -7,7 +7,6 @@ import {
   markAllNotificationsRead,
   clearReadNotifications,
 } from '../lib/api';
-import { useToast } from '../components/ui/toast';
 
 interface NotificationContextType {
   notifications: Notification[];
@@ -37,7 +36,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [hasMore, setHasMore] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const offsetRef = useRef(0);
-  const { addToast } = useToast();
 
   const loadNotifications = useCallback(async (reset = false) => {
     try {
@@ -60,15 +58,10 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       setHasMore(data.has_more);
     } catch (error) {
       console.error('Failed to load notifications:', error);
-      addToast({
-        type: 'error',
-        title: 'Unable to load notifications',
-        message: 'Please try again later.',
-      });
     } finally {
       setIsLoading(false);
     }
-  }, [filter, addToast]);
+  }, [filter]);
 
   const loadUnreadCount = useCallback(async () => {
     try {
@@ -99,13 +92,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         prev.map((n) => (n.id === id ? { ...n, is_read: false } : n))
       );
       setUnreadCount((prev) => prev + 1);
-      addToast({
-        type: 'error',
-        title: 'Unable to update notification',
-        message: 'Please try again.',
-      });
     }
-  }, [addToast]);
+  }, []);
 
   const markAllAsRead = useCallback(async () => {
     if (isActionLoading) return;
@@ -125,15 +113,10 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       // Rollback on error
       setNotifications(previousNotifications);
       setUnreadCount(previousUnreadCount);
-      addToast({
-        type: 'error',
-        title: 'Unable to update notifications',
-        message: 'Please try again.',
-      });
     } finally {
       setIsActionLoading(false);
     }
-  }, [isActionLoading, notifications, unreadCount, addToast]);
+  }, [isActionLoading, notifications, unreadCount]);
 
   const clearRead = useCallback(async () => {
     if (isActionLoading) return;
@@ -151,15 +134,10 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       console.error('Failed to clear read notifications:', error);
       // Rollback on error
       setNotifications(previousNotifications);
-      addToast({
-        type: 'error',
-        title: 'Unable to clear notifications',
-        message: 'Please try again.',
-      });
     } finally {
       setIsActionLoading(false);
     }
-  }, [isActionLoading, notifications, loadUnreadCount, addToast]);
+  }, [isActionLoading, notifications, loadUnreadCount]);
 
   const loadMore = useCallback(async () => {
     if (!hasMore || isLoading || isActionLoading) return;
