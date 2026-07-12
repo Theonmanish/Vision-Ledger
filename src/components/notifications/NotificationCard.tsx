@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import {
   CheckCircle2,
@@ -16,6 +16,8 @@ import {
 import type { Notification } from '../../types';
 import { formatRelativeTime } from '../../lib/utils';
 import { cn } from '../../lib/utils';
+import { downloadCertificate } from '../../lib/api';
+import { useToast } from '../ui/toast';
 
 interface NotificationCardProps {
   notification: Notification;
@@ -60,25 +62,67 @@ const NOTIFICATION_CONFIG = {
   },
 };
 
-const ACTION_CONFIG: Record<string, { label: string; icon: React.ComponentType<{ className?: string }> }> = {
-  verification_started: { label: 'View Status', icon: Eye },
-  verification_completed: { label: 'View Result', icon: Eye },
-  verification_review: { label: 'Open Verification', icon: Eye },
-  verification_failed: { label: 'Retry Verification', icon: RotateCcw },
-  certificate_generated: { label: 'Download PDF', icon: Download },
-  blockchain_anchored: { label: 'View on Sepolia', icon: ExternalLink },
-  batch_completed: { label: 'Open Batch Summary', icon: Eye },
-};
-
 export default function NotificationCard({ notification, onMarkRead }: NotificationCardProps) {
   const config = NOTIFICATION_CONFIG[notification.notification_type] || NOTIFICATION_CONFIG.verification_completed;
-  const actionConfig = ACTION_CONFIG[notification.notification_type] || ACTION_CONFIG.verification_completed;
   const Icon = config.icon;
-  const ActionIcon = actionConfig.icon;
+  const navigate = useNavigate();
+  const { addToast } = useToast();
 
-  const handleClick = () => {
+  const handleAction = async () => {
+    // Mark as read when clicked
     if (!notification.is_read) {
       onMarkRead(notification.id);
+    }
+
+    // Handle different notification types
+    switch (notification.notification_type) {
+      case 'verification_completed':
+      case 'verification_review':
+      case 'verification_started':
+        if (notification.claim_id) {
+          navigate(`/results/${notification.claim_id}`);
+        }
+        break;
+
+      case 'verification_failed':
+        navigate('/verify');
+        break;
+
+      case 'certificate_generated':
+        if (notification.claim_id) {
+          try {
+            await downloadCertificate(notification.claim_id);
+            addToast({
+              type: 'success',
+              title: 'Certificate downloaded',
+              message: 'Your certificate has been downloaded successfully.',
+            });
+          } catch (error) {
+            addToast({
+              type: 'error',
+              title: 'Download failed',
+              message: 'Unable to download certificate. Please try again.',
+            });
+          }
+        }
+        break;
+
+      case 'blockchain_anchored':
+        if (notification.action_url) {
+          window.open(notification.action_url, '_blank', 'noopener,noreferrer');
+        }
+        break;
+
+      case 'batch_completed':
+        if (notification.batch_id) {
+          navigate(`/history`);
+        }
+        break;
+
+      default:
+        if (notification.action_url) {
+          navigate(notification.action_url);
+        }
     }
   };
 
@@ -88,11 +132,12 @@ export default function NotificationCard({ notification, onMarkRead }: Notificat
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3 }}
       className={cn(
-        'group relative rounded-xl border p-4 transition-all duration-200',
+        'group relative rounded-xl border p-4 transition-all duration-200 cursor-pointer',
         notification.is_read
           ? 'border-white/5 bg-white/[0.02]'
           : 'border-white/10 bg-white/[0.05] hover:bg-white/[0.08]'
       )}
+      onClick={handleAction}
     >
       {/* Unread indicator */}
       {!notification.is_read && (
@@ -117,17 +162,32 @@ export default function NotificationCard({ notification, onMarkRead }: Notificat
 
           {/* Action button */}
           {notification.action_url && (
-            <Link
-              to={notification.action_url}
-              onClick={handleClick}
+            <button
               className={cn(
                 'mt-3 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors',
                 'bg-white/5 text-white/80 hover:bg-white/10 hover:text-white'
               )}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleAction();
+              }}
             >
-              <ActionIcon className="h-3.5 w-3.5" />
-              {actionConfig.label}
-            </Link>
+              {notification.notification_type === 'certificate_generated' && <Download className="h-3.5 w-3.5" />}
+              {notification.notification_type === 'blockchain_anchored' && <ExternalLink className="h-3.5 w-3.5" />}
+              {notification.notification_type === 'verification_failed' && <RotateCcw className="h-3.5 w-3.5" />}
+              {(notification.notification_type === 'verification_completed' ||
+                notification.notification_type === 'verification_review' ||
+                notification.notification_type === 'batch_completed') && <Eye className="h-3.5 w-3.5" />}
+              {notification.notification_type === 'verification_started' && <Clock className="h-3.5 w-3.5" />}
+
+              {notification.notification_type === 'certificate_generated' && 'Download PDF'}
+              {notification.notification_type === 'blockchain_anchored' && 'View on Sepolia'}
+              {notification.notification_type === 'verification_failed' && 'Retry Verification'}
+              {notification.notification_type === 'verification_completed' && 'View Result'}
+              {notification.notification_type === 'verification_review' && 'Open Verification'}
+              {notification.notification_type === 'batch_completed' && 'Open Batch Summary'}
+              {notification.notification_type === 'verification_started' && 'View Status'}
+            </button>
           )}
         </div>
       </div>

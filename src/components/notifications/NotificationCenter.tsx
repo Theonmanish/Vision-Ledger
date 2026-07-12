@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { X, CheckCheck, Trash2, Bell, FileCheck, FileText, Link2, AlertCircle, Layers } from 'lucide-react';
+import { X, CheckCheck, Trash2, Bell, FileCheck, FileText, Link2, AlertCircle, Layers, Loader2 } from 'lucide-react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import NotificationCard from './NotificationCard';
 import type { NotificationFilter } from '../../types';
@@ -24,6 +24,7 @@ export default function NotificationCenter({ isOpen, onClose }: NotificationCent
     notifications,
     unreadCount,
     isLoading,
+    isActionLoading,
     filter,
     setFilter,
     markAsRead,
@@ -80,17 +81,26 @@ export default function NotificationCenter({ isOpen, onClose }: NotificationCent
               <div className="flex gap-2 border-b border-white/10 px-6 py-3">
                 <button
                   onClick={markAllAsRead}
-                  disabled={unreadCount === 0}
-                  className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-white/70 transition-colors hover:bg-white/5 hover:text-white disabled:opacity-40"
+                  disabled={unreadCount === 0 || isActionLoading}
+                  className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-white/70 transition-colors hover:bg-white/5 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  <CheckCheck className="h-3.5 w-3.5" />
+                  {isActionLoading ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <CheckCheck className="h-3.5 w-3.5" />
+                  )}
                   Mark All as Read
                 </button>
                 <button
                   onClick={clearRead}
-                  className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-white/70 transition-colors hover:bg-white/5 hover:text-white"
+                  disabled={isActionLoading}
+                  className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-white/70 transition-colors hover:bg-white/5 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
+                  {isActionLoading ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-3.5 w-3.5" />
+                  )}
                   Clear Read
                 </button>
               </div>
@@ -121,7 +131,7 @@ export default function NotificationCenter({ isOpen, onClose }: NotificationCent
               <div className="flex-1 overflow-y-auto px-6 py-4">
                 {isLoading && notifications.length === 0 ? (
                   <div className="flex items-center justify-center py-12">
-                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/20 border-t-white/60" />
+                    <Loader2 className="h-6 w-6 animate-spin text-white/60" />
                   </div>
                 ) : notifications.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -145,10 +155,17 @@ export default function NotificationCenter({ isOpen, onClose }: NotificationCent
                     {hasMore && (
                       <button
                         onClick={loadMore}
-                        disabled={isLoading}
-                        className="w-full rounded-lg border border-white/10 bg-white/5 py-3 text-sm font-medium text-white/70 transition-colors hover:bg-white/10 disabled:opacity-40"
+                        disabled={isLoading || isActionLoading}
+                        className="w-full rounded-lg border border-white/10 bg-white/5 py-3 text-sm font-medium text-white/70 transition-colors hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
                       >
-                        {isLoading ? 'Loading...' : 'Load More'}
+                        {isLoading ? (
+                          <span className="inline-flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Loading...
+                          </span>
+                        ) : (
+                          'Load More'
+                        )}
                       </button>
                     )}
                   </div>
