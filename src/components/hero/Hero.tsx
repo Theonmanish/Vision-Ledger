@@ -221,7 +221,7 @@ export default function Hero() {
           </Link>
           <button
             type="button"
-            onClick={() => window.open("/demo.mp4", "_blank", "noopener,noreferrer")}
+            onClick={() => window.open("/vl1.mp4", "_blank", "noopener,noreferrer")}
             className="inline-flex min-h-[44px] items-center justify-center rounded-full border border-white/[0.08] px-8 text-base font-medium text-white transition-colors hover:bg-white/10 active:scale-[0.98]"
           >
             Watch Demo
