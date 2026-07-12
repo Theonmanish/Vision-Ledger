@@ -66,6 +66,10 @@ export default defineConfig((): UserConfig => ({
         cleanupOutdatedCaches: true,
         runtimeCaching: [
           {
+            urlPattern: ({ request }) => request.destination === 'video',
+            handler: 'NetworkOnly',
+          },
+          {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
             handler: 'CacheFirst',
             options: {
